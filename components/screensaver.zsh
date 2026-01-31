@@ -282,6 +282,251 @@ noautolock() {
 }
 
 # ─────────────────────────────────────────────────────────────────
+# Analog Clock Screensaver
+# ─────────────────────────────────────────────────────────────────
+
+# Sine/Cosine lookup tables (pre-computed for 0-360 degrees, scaled by 1000)
+# Index 0-90 degrees, values are sin*1000
+typeset -ga _SIN_TABLE
+_SIN_TABLE=(0 17 35 52 70 87 105 122 139 156 174 191 208 225 242 259 276 292 309 326 342 358 375 391 407 423 438 454 469 485 500 515 530 545 559 574 588 602 616 629 643 656 669 682 695 707 719 731 743 755 766 777 788 799 809 819 829 839 848 857 866 875 883 891 899 906 914 921 927 934 940 946 951 956 961 966 970 974 978 982 985 988 990 993 995 996 998 999 1000 1000 1000)
+
+# Get sine value (angle in degrees 0-360)
+_sin_deg() {
+    local angle=$(( ($1 % 360 + 360) % 360 ))
+    local idx val
+    
+    if [[ $angle -le 90 ]]; then
+        val=${_SIN_TABLE[$((angle + 1))]}
+    elif [[ $angle -le 180 ]]; then
+        val=${_SIN_TABLE[$((180 - angle + 1))]}
+    elif [[ $angle -le 270 ]]; then
+        val=-${_SIN_TABLE[$((angle - 180 + 1))]}
+    else
+        val=-${_SIN_TABLE[$((360 - angle + 1))]}
+    fi
+    echo ${val:-0}
+}
+
+# Get cosine value (angle in degrees 0-360)  
+_cos_deg() {
+    _sin_deg $(($1 + 90))
+}
+
+# Draw clock hand from center to edge
+_draw_hand() {
+    local cx=$1 cy=$2 len=$3 angle=$4 color=$5 char=$6
+    local i px py sin_v cos_v
+    
+    sin_v=$(_sin_deg $angle)
+    cos_v=$(_cos_deg $angle)
+    
+    for ((i = 1; i <= len; i++)); do
+        # Multiply x by 2 for terminal aspect ratio
+        px=$(( cx + (i * cos_v * 2) / 1000 ))
+        py=$(( cy - (i * sin_v) / 1000 ))
+        
+        if [[ $px -ge 0 && $py -ge 0 ]]; then
+            tput cup $py $px
+            printf "\033[38;5;${color}m${char}\033[0m"
+        fi
+    done
+}
+
+# Draw clock face based on shape
+_draw_clock_face() {
+    local cx=$1 cy=$2 radius=$3 shape=$4
+    local i px py angle
+    
+    case "$shape" in
+        square)
+            # Draw square frame
+            for ((i = -radius; i <= radius; i++)); do
+                # Top edge
+                tput cup $((cy - radius)) $((cx + i * 2))
+                printf '\033[38;5;240m─\033[0m'
+                # Bottom edge
+                tput cup $((cy + radius)) $((cx + i * 2))
+                printf '\033[38;5;240m─\033[0m'
+            done
+            for ((i = -radius; i <= radius; i++)); do
+                # Left edge
+                tput cup $((cy + i)) $((cx - radius * 2))
+                printf '\033[38;5;240m│\033[0m'
+                # Right edge
+                tput cup $((cy + i)) $((cx + radius * 2))
+                printf '\033[38;5;240m│\033[0m'
+            done
+            # Corners
+            tput cup $((cy - radius)) $((cx - radius * 2)); printf '\033[38;5;245m┌\033[0m'
+            tput cup $((cy - radius)) $((cx + radius * 2)); printf '\033[38;5;245m┐\033[0m'
+            tput cup $((cy + radius)) $((cx - radius * 2)); printf '\033[38;5;245m└\033[0m'
+            tput cup $((cy + radius)) $((cx + radius * 2)); printf '\033[38;5;245m┘\033[0m'
+            ;;
+        diamond)
+            # Draw diamond shape
+            for ((i = 0; i <= radius; i++)); do
+                local offset=$((radius - i))
+                tput cup $((cy - offset)) $((cx - i * 2)); printf '\033[38;5;240m/\033[0m'
+                tput cup $((cy - offset)) $((cx + i * 2)); printf '\033[38;5;240m\\\033[0m'
+                tput cup $((cy + offset)) $((cx - i * 2)); printf '\033[38;5;240m\\\033[0m'
+                tput cup $((cy + offset)) $((cx + i * 2)); printf '\033[38;5;240m/\033[0m'
+            done
+            ;;
+        circle|*)
+            # Draw circle (default)
+            for ((i = 0; i < 60; i++)); do
+                angle=$((i * 6 + 90))  # Start from top (90 degrees)
+                px=$(( cx + (radius * $(_cos_deg $angle) * 2) / 1000 ))
+                py=$(( cy - (radius * $(_sin_deg $angle)) / 1000 ))
+                
+                if [[ $px -ge 0 && $py -ge 0 ]]; then
+                    tput cup $py $px
+                    if [[ $((i % 5)) -eq 0 ]]; then
+                        printf '\033[38;5;245m●\033[0m'
+                    else
+                        printf '\033[38;5;238m·\033[0m'
+                    fi
+                fi
+            done
+            ;;
+    esac
+    
+    # Draw hour numbers
+    local -a positions
+    positions=(
+        "12:0:-1"    # 12 o'clock
+        "3:1:0"      # 3 o'clock
+        "6:0:1"      # 6 o'clock
+        "9:-1:0"     # 9 o'clock
+    )
+    
+    for pos in "${positions[@]}"; do
+        local num="${pos%%:*}"
+        local rest="${pos#*:}"
+        local dx="${rest%%:*}"
+        local dy="${rest#*:}"
+        
+        local npx=$((cx + dx * (radius + 1) * 2))
+        local npy=$((cy + dy * (radius + 1)))
+        
+        if [[ $npx -ge 0 && $npy -ge 0 ]]; then
+            tput cup $npy $npx
+            printf '\033[1;38;5;255m%s\033[0m' "$num"
+        fi
+    done
+}
+
+# Main analog clock function
+aclock() {
+    local shape="${1:-circle}"  # circle, square, or diamond
+    
+    tput smcup
+    tput civis
+    stty -echo
+    trap 'tput cnorm; tput rmcup; stty echo; clear; return' INT TERM
+    
+    clear
+    printf '\033[48;5;235m\033[2J'  # Dark gray background
+    
+    local cols rows cx cy radius
+    local hour minute second h_angle m_angle s_angle
+    local h_len m_len s_len date_str
+    
+    cols=$(tput cols)
+    rows=$(tput lines)
+    
+    # Center of clock
+    cx=$((cols / 2))
+    cy=$((rows / 2 - 2))
+    
+    # Calculate radius based on terminal size
+    if [[ $((cols / 4)) -lt $((rows - 6)) ]]; then
+        radius=$((cols / 8 - 1))
+    else
+        radius=$((rows / 2 - 4))
+    fi
+    
+    # Minimum radius
+    [[ $radius -lt 5 ]] && radius=5
+    
+    # Hand lengths
+    h_len=$((radius * 50 / 100))
+    m_len=$((radius * 70 / 100))
+    s_len=$((radius * 85 / 100))
+    
+    while true; do
+        # Clear clock area
+        clear
+        printf '\033[48;5;235m\033[2J'
+        
+        # Get current time
+        hour=$(date +%I)
+        minute=$(date +%M)
+        second=$(date +%S)
+        date_str=$(date +"%A, %B %d, %Y")
+        
+        # Remove leading zeros for calculation
+        local h_val=$((10#$hour))
+        local m_val=$((10#$minute))
+        local s_val=$((10#$second))
+        
+        # Draw clock face
+        _draw_clock_face $cx $cy $radius "$shape"
+        
+        # Calculate hand angles (0 = right/3 o'clock, going counter-clockwise)
+        # We want 12 o'clock = 90 degrees, clockwise movement
+        h_angle=$((90 - (h_val * 30 + m_val / 2)))
+        m_angle=$((90 - m_val * 6))
+        s_angle=$((90 - s_val * 6))
+        
+        # Draw hands (hour first, then minute, then second on top)
+        _draw_hand $cx $cy $h_len $h_angle 214 "█"
+        _draw_hand $cx $cy $m_len $m_angle 255 "▓"
+        _draw_hand $cx $cy $s_len $s_angle 196 "─"
+        
+        # Draw center dot
+        tput cup $cy $cx
+        printf '\033[1;38;5;255m◉\033[0m'
+        
+        # Draw date below clock
+        local date_x=$(( (cols - ${#date_str}) / 2 ))
+        tput cup $((cy + radius + 3)) $date_x
+        printf '\033[38;5;245m%s\033[0m' "$date_str"
+        
+        # Draw shape indicator
+        tput cup $((rows - 2)) 2
+        printf '\033[38;5;238mShape: %s │ Press any key to exit\033[0m' "$shape"
+        
+        # Wait and check for keypress
+        read -t 1 -k 1 2>/dev/null && break
+    done
+    
+    tput cnorm
+    tput rmcup
+    stty echo
+    clear
+}
+
+# Fullscreen analog clock lock
+alock() {
+    local shape="${1:-circle}"
+    local was_fullscreen=false
+    
+    if _is_fullscreen; then
+        was_fullscreen=true
+    else
+        _toggle_fullscreen
+        sleep 0.5
+    fi
+    
+    aclock "$shape"
+    
+    if [[ "$was_fullscreen" == "false" ]]; then
+        _toggle_fullscreen
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────────
 # Matrix Rain Screensaver (bonus)
 # ─────────────────────────────────────────────────────────────────
 
