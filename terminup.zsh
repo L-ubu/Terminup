@@ -178,4 +178,4 @@ terminup() {
 
 # Alias for quick access
 alias tup='terminup'
-
+alias tups='source ~/.zshrc && echo -e "  \033[38;5;46m✓\033[0m Shell reloaded!"'
