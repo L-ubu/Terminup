@@ -327,7 +327,64 @@ _draw_hand() {
         
         if [[ $px -ge 0 && $py -ge 0 ]]; then
             tput cup $py $px
-            printf "\033[38;5;${color}m${char}\033[0m"
+            # Include background color to prevent artifacts
+            printf "\033[48;5;235;38;5;${color}m${char}\033[0m"
+        fi
+    done
+}
+
+# Draw a regular polygon with n sides
+_draw_polygon() {
+    local cx=$1 cy=$2 radius=$3 sides=$4
+    local i j x1 y1 x2 y2 angle1 angle2 steps dx dy
+    local step_angle=$((360 / sides))
+    
+    # Draw each edge of the polygon
+    for ((i = 0; i < sides; i++)); do
+        # Calculate vertices (start from top, 90 degrees)
+        angle1=$((90 + i * step_angle))
+        angle2=$((90 + (i + 1) * step_angle))
+        
+        x1=$(( cx + (radius * $(_cos_deg $angle1) * 2) / 1000 ))
+        y1=$(( cy - (radius * $(_sin_deg $angle1)) / 1000 ))
+        x2=$(( cx + (radius * $(_cos_deg $angle2) * 2) / 1000 ))
+        y2=$(( cy - (radius * $(_sin_deg $angle2)) / 1000 ))
+        
+        # Draw line between vertices using interpolation
+        dx=$((x2 - x1))
+        dy=$((y2 - y1))
+        
+        # Number of steps based on distance
+        if [[ ${dx#-} -gt ${dy#-} ]]; then
+            steps=${dx#-}
+        else
+            steps=${dy#-}
+        fi
+        [[ $steps -eq 0 ]] && steps=1
+        
+        for ((j = 0; j <= steps; j++)); do
+            local px=$((x1 + dx * j / steps))
+            local py=$((y1 + dy * j / steps))
+            
+            if [[ $px -ge 0 && $py -ge 0 ]]; then
+                tput cup $py $px
+                # Use different characters based on line angle
+                if [[ ${dx#-} -gt $((${dy#-} * 2)) ]]; then
+                    printf '\033[38;5;240m─\033[0m'
+                elif [[ ${dy#-} -gt $((${dx#-} * 2)) ]]; then
+                    printf '\033[38;5;240m│\033[0m'
+                elif [[ $dx -gt 0 && $dy -lt 0 ]] || [[ $dx -lt 0 && $dy -gt 0 ]]; then
+                    printf '\033[38;5;240m/\033[0m'
+                else
+                    printf '\033[38;5;240m\\\033[0m'
+                fi
+            fi
+        done
+        
+        # Draw vertex marker
+        if [[ $x1 -ge 0 && $y1 -ge 0 ]]; then
+            tput cup $y1 $x1
+            printf '\033[38;5;245m●\033[0m'
         fi
     done
 }
@@ -363,7 +420,7 @@ _draw_clock_face() {
             tput cup $((cy + radius)) $((cx + radius * 2)); printf '\033[38;5;245m┘\033[0m'
             ;;
         diamond)
-            # Draw diamond shape
+            # Draw diamond shape (4 sides, rotated square)
             for ((i = 0; i <= radius; i++)); do
                 local offset=$((radius - i))
                 tput cup $((cy - offset)) $((cx - i * 2)); printf '\033[38;5;240m/\033[0m'
@@ -371,6 +428,18 @@ _draw_clock_face() {
                 tput cup $((cy + offset)) $((cx - i * 2)); printf '\033[38;5;240m\\\033[0m'
                 tput cup $((cy + offset)) $((cx + i * 2)); printf '\033[38;5;240m/\033[0m'
             done
+            ;;
+        hexagon)
+            # Draw hexagon (6 sides) - vertices every 60 degrees
+            _draw_polygon $cx $cy $radius 6
+            ;;
+        octagon)
+            # Draw octagon (8 sides) - vertices every 45 degrees
+            _draw_polygon $cx $cy $radius 8
+            ;;
+        decagon)
+            # Draw decagon (10 sides) - vertices every 36 degrees
+            _draw_polygon $cx $cy $radius 10
             ;;
         circle|*)
             # Draw circle (default)
@@ -416,6 +485,26 @@ _draw_clock_face() {
     done
 }
 
+# Erase a hand by drawing spaces along its path (preserving background)
+_erase_hand() {
+    local cx=$1 cy=$2 len=$3 angle=$4
+    local i px py sin_v cos_v
+    
+    sin_v=$(_sin_deg $angle)
+    cos_v=$(_cos_deg $angle)
+    
+    for ((i = 1; i <= len; i++)); do
+        px=$(( cx + (i * cos_v * 2) / 1000 ))
+        py=$(( cy - (i * sin_v) / 1000 ))
+        
+        if [[ $px -ge 0 && $py -ge 0 ]]; then
+            tput cup $py $px
+            # Preserve the dark gray background (color 235)
+            printf '\033[48;5;235m \033[0m'
+        fi
+    done
+}
+
 # Main analog clock function
 aclock() {
     local shape="${1:-circle}"  # circle, square, or diamond
@@ -431,6 +520,8 @@ aclock() {
     local cols rows cx cy radius
     local hour minute second h_angle m_angle s_angle
     local h_len m_len s_len date_str
+    local prev_h_angle prev_m_angle prev_s_angle
+    local first_draw=true
     
     cols=$(tput cols)
     rows=$(tput lines)
@@ -454,51 +545,81 @@ aclock() {
     m_len=$((radius * 70 / 100))
     s_len=$((radius * 85 / 100))
     
+    # Draw static elements once
+    _draw_clock_face $cx $cy $radius "$shape"
+    
+    # Draw date below clock
+    date_str=$(date +"%A, %B %d, %Y")
+    local date_x=$(( (cols - ${#date_str}) / 2 ))
+    tput cup $((cy + radius + 3)) $date_x
+    printf '\033[38;5;245m%s\033[0m' "$date_str"
+    
+    # Draw shape indicator
+    tput cup $((rows - 2)) 2
+    printf '\033[38;5;238mShape: %s │ Press any key to exit\033[0m' "$shape"
+    
+    # Initialize previous angles
+    prev_h_angle=999
+    prev_m_angle=999
+    prev_s_angle=999
+    
     while true; do
-        # Clear clock area
-        clear
-        printf '\033[48;5;235m\033[2J'
-        
         # Get current time
         hour=$(date +%I)
         minute=$(date +%M)
         second=$(date +%S)
-        date_str=$(date +"%A, %B %d, %Y")
         
         # Remove leading zeros for calculation
         local h_val=$((10#$hour))
         local m_val=$((10#$minute))
         local s_val=$((10#$second))
         
-        # Draw clock face
-        _draw_clock_face $cx $cy $radius "$shape"
-        
-        # Calculate hand angles (0 = right/3 o'clock, going counter-clockwise)
-        # We want 12 o'clock = 90 degrees, clockwise movement
+        # Calculate hand angles
         h_angle=$((90 - (h_val * 30 + m_val / 2)))
         m_angle=$((90 - m_val * 6))
         s_angle=$((90 - s_val * 6))
         
-        # Draw hands (hour first, then minute, then second on top)
-        _draw_hand $cx $cy $h_len $h_angle 214 "█"
-        _draw_hand $cx $cy $m_len $m_angle 255 "▓"
-        _draw_hand $cx $cy $s_len $s_angle 196 "─"
-        
-        # Draw center dot
-        tput cup $cy $cx
-        printf '\033[1;38;5;255m◉\033[0m'
-        
-        # Draw date below clock
-        local date_x=$(( (cols - ${#date_str}) / 2 ))
-        tput cup $((cy + radius + 3)) $date_x
-        printf '\033[38;5;245m%s\033[0m' "$date_str"
-        
-        # Draw shape indicator
-        tput cup $((rows - 2)) 2
-        printf '\033[38;5;238mShape: %s │ Press any key to exit\033[0m' "$shape"
+        # Only redraw if angles changed
+        if [[ $s_angle -ne $prev_s_angle || $first_draw == true ]]; then
+            
+            # Erase previous hands (if not first draw)
+            if [[ $first_draw != true ]]; then
+                _erase_hand $cx $cy $s_len $prev_s_angle
+                
+                # Only erase minute/hour if they changed
+                if [[ $m_angle -ne $prev_m_angle ]]; then
+                    _erase_hand $cx $cy $m_len $prev_m_angle
+                fi
+                if [[ $h_angle -ne $prev_h_angle ]]; then
+                    _erase_hand $cx $cy $h_len $prev_h_angle
+                fi
+            fi
+            
+            # Draw hands (hour first, then minute, then second on top)
+            _draw_hand $cx $cy $h_len $h_angle 214 "█"
+            _draw_hand $cx $cy $m_len $m_angle 255 "▓"
+            _draw_hand $cx $cy $s_len $s_angle 196 "─"
+            
+            # Draw center dot (might get overwritten by erase)
+            tput cup $cy $cx
+            printf '\033[1;38;5;255m◉\033[0m'
+            
+            # Update date at midnight
+            if [[ $h_val -eq 12 && $m_val -eq 0 && $s_val -eq 0 ]]; then
+                date_str=$(date +"%A, %B %d, %Y")
+                tput cup $((cy + radius + 3)) $date_x
+                printf '\033[38;5;245m%s\033[0m' "$date_str"
+            fi
+            
+            # Store current angles
+            prev_h_angle=$h_angle
+            prev_m_angle=$m_angle
+            prev_s_angle=$s_angle
+            first_draw=false
+        fi
         
         # Wait and check for keypress
-        read -t 1 -k 1 2>/dev/null && break
+        read -t 0.5 -k 1 2>/dev/null && break
     done
     
     tput cnorm
