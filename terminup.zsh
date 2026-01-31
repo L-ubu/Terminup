@@ -178,3 +178,4 @@ terminup() {
 
 # Alias for quick access
 alias tup='terminup'
+
