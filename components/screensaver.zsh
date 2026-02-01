@@ -223,12 +223,17 @@ lock() {
     fi
 }
 
-# Lock the actual Mac (system lock screen)
+# Lock the system (cross-platform)
 syslock() {
-    echo -e "  \033[38;5;208m🔒 Locking Mac...\033[0m"
+    echo -e "  \033[38;5;208m🔒 Locking system...\033[0m"
     sleep 0.3
-    # Use pmset to lock (works on all macOS versions)
-    osascript -e 'tell application "System Events" to keystroke "q" using {control down, command down}' 2>/dev/null
+    # Use cross-platform lock function if available
+    if type _lock_screen &>/dev/null; then
+        _lock_screen
+    else
+        # Fallback for macOS
+        osascript -e 'tell application "System Events" to keystroke "q" using {control down, command down}' 2>/dev/null
+    fi
 }
 
 # Combined: Fullscreen screensaver + system lock when unlocked
