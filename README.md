@@ -29,6 +29,10 @@ Terminup transforms your terminal into a modern, animated development environmen
 
 **Works with any Zsh setup** - Powerlevel10k is optional.
 
+**Cross-platform** - Works on macOS, Linux (Ubuntu, Arch, Fedora), and Windows (WSL).
+
+**Multilingual** - Supports English, Dutch, French, German, Spanish, and more!
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
@@ -76,6 +80,43 @@ Every git operation comes with visual feedback:
 - ASCII art headers
 - Success/failure indicators
 - Pretty formatted output
+
+### Screensavers & Lock Screen
+
+```
+   ╭─────────────────────────────────╮
+   │  🖥️ SCREENSAVER COLLECTION       │
+   ╰─────────────────────────────────╯
+   
+   • Digital Clock - Large ASCII time display
+   • Analog Clock - ASCII clock with multiple shapes
+   • Matrix Rain - Falling Japanese characters
+   • Pipes - Animated pipe maze
+   • Lock Screen - Fullscreen with unlock sequence
+```
+
+### Cross-Platform Support
+
+| Feature | macOS | Linux | Windows (WSL) |
+|---------|-------|-------|---------------|
+| Copy/Paste | ✅ | ✅ | ✅ |
+| Open URLs | ✅ | ✅ | ✅ |
+| Notifications | ✅ | ✅ | ✅ |
+| System Lock | ✅ | ✅ | ✅ |
+| Battery Info | ✅ | ✅ | - |
+
+### Multilingual Support
+
+Change the language of all messages:
+
+```bash
+lang set nl   # Dutch
+lang set fr   # French
+lang set de   # German
+lang set es   # Spanish
+```
+
+Supported: 🇬🇧 English, 🇳🇱 Nederlands, 🇫🇷 Français, 🇩🇪 Deutsch, 🇪🇸 Español, 🇵🇹 Português, 🇮🇹 Italiano, 🇵🇱 Polski, 🇷🇺 Русский, 🇨🇳 中文, 🇯🇵 日本語, 🇰🇷 한국어
 
 ### Theme System
 
@@ -127,8 +168,14 @@ When you open a new terminal, Terminup greets you with:
 ### Optional Dependencies
 
 ```bash
-brew install fzf    # Enhanced search (Ctrl+R)
-brew install bat    # Better file previews
+# macOS
+brew install fzf bat
+
+# Ubuntu/Debian
+sudo apt install fzf bat xclip
+
+# Arch Linux
+sudo pacman -S fzf bat xclip
 ```
 
 ### Quick Install
@@ -157,6 +204,21 @@ source ~/.zshrc
 
 ## Commands
 
+Use `tup` to see all commands, or `tup <category>` for specific categories.
+
+### Quick Reference
+
+| Command | Description |
+|---------|-------------|
+| `tup` | Show essential commands |
+| `tup all` | Show all commands |
+| `tup git` | Git commands |
+| `tup nav` | Navigation commands |
+| `tup npm` | NPM/PNPM commands |
+| `tup screen` | Screensaver commands |
+| `tup system` | System & language commands |
+| `tups` | Reload shell |
+
 ### Git
 
 | Command | Description |
@@ -169,6 +231,8 @@ source ~/.zshrc
 | `gco <branch>` | Checkout branch |
 | `gss` | Status overview |
 | `glog` | Pretty log graph |
+| `gst` / `gstp` | Stash / Stash pop |
+| `gm <branch>` | Merge branch |
 
 ### Navigation
 
@@ -191,6 +255,50 @@ source ~/.zshrc
 | `build` | Production build |
 | `scripts` | List npm scripts |
 | `fscript` | Fuzzy script picker |
+| `add <pkg>` | Add dependency |
+| `remove <pkg>` | Remove dependency |
+
+### Screensavers & Lock
+
+| Command | Description |
+|---------|-------------|
+| `lock` | Fullscreen digital clock |
+| `ss` | Digital clock screensaver |
+| `aclock [shape]` | Analog ASCII clock |
+| `alock [shape]` | Fullscreen analog clock |
+| `matrix` | Matrix rain effect |
+| `pipes` | Pipe maze screensaver |
+| `syslock` | Lock the system |
+| `autolock [secs]` | Auto-lock after idle |
+
+**Shapes:** `circle`, `square`, `diamond`, `hexagon`, `octagon`, `decagon`
+
+**Unlock:** Arrow keys ← ↑ → ↓
+
+### System & Language
+
+| Command | Description |
+|---------|-------------|
+| `lang list` | Show available languages |
+| `lang set <code>` | Set language (en/nl/fr/de/es) |
+| `lang current` | Show current language |
+| `platform` | Show platform info |
+| `stats` | System statistics |
+
+### Extras
+
+| Command | Description |
+|---------|-------------|
+| `pomo [mins]` | Pomodoro timer |
+| `focus [mins]` | Focus mode |
+| `note [text]` | Quick notes |
+| `quote` | Programming quote |
+| `decide a b c` | Decision maker |
+| `genpass [len]` | Password generator |
+| `cleanup [type]` | Quick cleanup |
+| `spotify` | Spotify control (macOS) |
+| `google <query>` | Web search |
+| `github <query>` | GitHub search |
 
 ### Themes
 
@@ -201,28 +309,6 @@ source ~/.zshrc
 | `theme preview <name>` | Preview theme |
 | `theme custom` | Build custom theme |
 | `colors` | Show color palette |
-
-### Extras
-
-| Command | Description |
-|---------|-------------|
-| `pomo [mins]` | Pomodoro timer |
-| `note [text]` | Quick notes |
-| `quote` | Programming quote |
-| `decide a b c` | Decision maker |
-| `stats` | System stats |
-| `genpass [len]` | Password generator |
-| `cleanup [type]` | Quick cleanup |
-| `spotify` | Spotify control |
-
-### Startup
-
-| Command | Description |
-|---------|-------------|
-| `boot` | Full startup animation |
-| `bootmin` | Minimal startup |
-
-Use `terminup` or `tup` to see all commands.
 
 ---
 
@@ -262,6 +348,9 @@ export TERMINUP_STARTUP_STYLE=minimal
 
 # Or completely off
 export TERMINUP_STARTUP_STYLE=off
+
+# Set default language
+export TERMINUP_LANG=nl
 ```
 
 ---
@@ -275,6 +364,7 @@ terminup/
 ├── README.md
 ├── CONTRIBUTING.md
 ├── LICENSE
+├── ascii-art/             # ASCII art assets
 └── components/
     ├── animations.zsh     # Spinners, progress bars
     ├── colors.zsh         # Color definitions
@@ -284,8 +374,11 @@ terminup/
     ├── extras.zsh         # Productivity tools
     ├── fzf-power.zsh      # FZF integrations
     ├── git-magic.zsh      # Git enhancements
+    ├── i18n.zsh           # Internationalization
     ├── navigation.zsh     # cd/ls improvements
     ├── npm-pnpm.zsh       # Package manager tools
+    ├── platform.zsh       # Cross-platform utilities
+    ├── screensaver.zsh    # Screensavers & lock
     ├── startup.zsh        # Boot sequence
     └── themes.zsh         # Theme system
 ```
@@ -300,7 +393,7 @@ Contributions are welcome! Whether it's:
 - New features
 - Documentation improvements
 - Theme additions
-- Translations
+- **Translations** (see `components/i18n.zsh`)
 
 ### Development Setup
 
@@ -324,6 +417,20 @@ source terminup.zsh
 2. **Keep it optional** - Features should degrade gracefully
 3. **Keep it clean** - Follow existing code style
 4. **Test thoroughly** - Test on clean zsh installs
+5. **Cross-platform** - Use platform utilities (`_open`, `_copy`, etc.)
+6. **Multilingual** - Use `_t()` for user-facing strings
+
+### Adding a Translation
+
+Edit `components/i18n.zsh`:
+
+```zsh
+typeset -gA _T_xx  # xx = language code
+_T_xx=(
+    welcome "Your translation"
+    # ... add all keys from _T_en
+)
+```
 
 ### Adding a Theme
 
@@ -340,7 +447,7 @@ Colors are 256-color terminal codes (0-255).
 ### Adding a Command
 
 1. Create or edit a component file
-2. Add the function
+2. Add the function with `_t()` for messages
 3. Update the help in `terminup.zsh`
 4. Update this README
 
@@ -351,6 +458,21 @@ Colors are 256-color terminal codes (0-255).
 ### Does it work without Powerlevel10k?
 
 **Yes.** Terminup is completely independent. Powerlevel10k handles your prompt, Terminup adds commands and features. They complement each other but neither requires the other.
+
+### Does it work on Linux/Windows?
+
+**Yes.** Full support for:
+- **macOS** - All features
+- **Linux** - Ubuntu, Arch, Fedora, and others
+- **Windows** - Via WSL (Windows Subsystem for Linux)
+
+### How do I change the language?
+
+```bash
+lang set nl   # Dutch
+lang set fr   # French
+# ... etc
+```
 
 ### How do I disable the startup animation?
 
@@ -369,7 +491,7 @@ No. All features load lazily. The startup animation only runs once per session a
 ```bash
 cd ~/Projects/Terminup
 git pull
-source ~/.zshrc
+tups  # or: source ~/.zshrc
 ```
 
 ---
