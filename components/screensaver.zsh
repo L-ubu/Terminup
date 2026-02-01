@@ -178,8 +178,9 @@ _screensaver_cleanup() {
 # Remove any previous lock alias to allow function definition
 unalias lock 2>/dev/null
 
-# Check if terminal is in fullscreen
+# Check if terminal is in fullscreen (macOS only, returns false on other platforms)
 _is_fullscreen() {
+    [[ "$TERMINUP_OS" != "macos" ]] && return 1
     local result
     result=$(osascript -e 'tell application "System Events"
         tell (first process whose frontmost is true)
@@ -191,8 +192,9 @@ _is_fullscreen() {
     [[ "$result" == "true" ]]
 }
 
-# Toggle fullscreen for the current terminal window
+# Toggle fullscreen for the current terminal window (macOS only)
 _toggle_fullscreen() {
+    [[ "$TERMINUP_OS" != "macos" ]] && return
     osascript -e 'tell application "System Events"
         tell (first process whose frontmost is true)
             keystroke "f" using {command down, control down}
@@ -225,15 +227,9 @@ lock() {
 
 # Lock the system (cross-platform)
 syslock() {
-    echo -e "  \033[38;5;208m🔒 Locking system...\033[0m"
+    echo -e "  \033[38;5;208m🔒 $(_t locking_system "Locking system")...\033[0m"
     sleep 0.3
-    # Use cross-platform lock function if available
-    if type _lock_screen &>/dev/null; then
-        _lock_screen
-    else
-        # Fallback for macOS
-        osascript -e 'tell application "System Events" to keystroke "q" using {control down, command down}' 2>/dev/null
-    fi
+    _lock_screen
 }
 
 # Combined: Fullscreen screensaver + system lock when unlocked

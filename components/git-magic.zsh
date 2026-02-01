@@ -73,12 +73,12 @@ gc() {
     if [[ -n "$1" ]]; then
         local message="$*"
     else
-        echo -e "  \033[38;5;226m📝 Enter commit message:\033[0m"
+        echo -e "  \033[38;5;226m📝 $(_t enter_message "Enter commit message"):\033[0m"
         read -r message
     fi
     
     if [[ -z "$message" ]]; then
-        echo -e "  \033[38;5;196m✗ Commit cancelled - no message provided\033[0m"
+        echo -e "  \033[38;5;196m✗ $(_t cancelled) - $(_t no_message "no message provided")\033[0m"
         return 1
     fi
     
@@ -90,7 +90,7 @@ gc() {
     local i=0
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  \033[38;5;51m%s\033[0m Committing changes..." "${frames[$((i % 10))]}"
+        printf "\r  \033[38;5;51m%s\033[0m $(_t git_commit)..." "${frames[$((i % 10))]}"
         sleep 0.1
         ((i++))
     done
@@ -99,12 +99,12 @@ gc() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓\033[0m Changes committed successfully! 🎉\033[K"
+        echo -e "\r  \033[38;5;46m✓\033[0m $(_t success)! 🎉\033[K"
         echo ""
         echo -e "  \033[38;5;245mMessage:\033[0m $message"
         echo ""
     else
-        echo -e "\r  \033[38;5;196m✗\033[0m Commit failed\033[K"
+        echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_commit) $(_t error)\033[K"
     fi
     
     return $exit_code
@@ -129,7 +129,7 @@ gp() {
     local i=0
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  %s Pushing to remote..." "${rockets[$((i % 8))]}"
+        printf "\r  %s $(_t git_push)..." "${rockets[$((i % 8))]}"
         sleep 0.15
         ((i++))
     done
@@ -138,20 +138,20 @@ gp() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓\033[0m Successfully pushed to $remote/$branch! ☁️✨\033[K"
+        echo -e "\r  \033[38;5;46m✓\033[0m $(_t success)! ☁️✨\033[K"
         echo ""
         
         # Show celebration
         local emojis=("🎉" "🚀" "✨" "🌟")
         for i in {1..2}; do
             for emoji in "${emojis[@]}"; do
-                printf "\r  %s Push complete! %s" "$emoji" "$emoji"
+                printf "\r  %s $(_t done)! %s" "$emoji" "$emoji"
                 sleep 0.1
             done
         done
-        printf "\r  🎉 Push complete! 🎉\033[K\n"
+        printf "\r  🎉 $(_t done)! 🎉\033[K\n"
     else
-        echo -e "\r  \033[38;5;196m✗\033[0m Push failed\033[K"
+        echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_push) $(_t error)\033[K"
     fi
     echo ""
     
@@ -177,7 +177,7 @@ gl() {
     local i=0
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  %s Pulling from remote..." "${download[$((i % 8))]}"
+        printf "\r  %s $(_t git_pull)..." "${download[$((i % 8))]}"
         sleep 0.15
         ((i++))
     done
@@ -186,9 +186,9 @@ gl() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓\033[0m Successfully pulled from $remote/$branch! 📦✨\033[K"
+        echo -e "\r  \033[38;5;46m✓\033[0m $(_t success)! 📦✨\033[K"
     else
-        echo -e "\r  \033[38;5;196m✗\033[0m Pull failed or conflicts detected\033[K"
+        echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_pull) $(_t error)\033[K"
     fi
     echo ""
     
@@ -199,7 +199,7 @@ gl() {
 ga() {
     local files="${@:-.}"
     
-    echo -e "\n  \033[38;5;208m📂 Staging files...\033[0m"
+    echo -e "\n  \033[38;5;208m📂 $(_t git_add)...\033[0m"
     
     git add $files &>/dev/null &
     local pid=$!
@@ -214,7 +214,7 @@ ga() {
     
     wait $pid
     
-    echo -e "\r  \033[38;5;46m✓ Files staged!\033[0m\033[K"
+    echo -e "\r  \033[38;5;46m✓ $(_t done)!\033[0m\033[K"
     echo ""
     
     # Show what was staged
@@ -249,11 +249,11 @@ gco() {
     local branch="$1"
     
     if [[ -z "$branch" ]]; then
-        echo -e "  \033[38;5;196m✗ Please specify a branch name\033[0m"
+        echo -e "  \033[38;5;196m✗ $(_t error): $(_t specify_branch "Please specify a branch name")\033[0m"
         return 1
     fi
     
-    echo -e "\n  \033[38;5;51m🔄 Switching to branch: $branch\033[0m"
+    echo -e "\n  \033[38;5;51m🔄 $(_t git_checkout): $branch\033[0m"
     
     local frames=("◐" "◓" "◑" "◒")
     git checkout $branch 2>&1 &
@@ -261,7 +261,7 @@ gco() {
     local i=0
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  \033[38;5;51m%s\033[0m Switching branches..." "${frames[$((i % 4))]}"
+        printf "\r  \033[38;5;51m%s\033[0m $(_t git_checkout)..." "${frames[$((i % 4))]}"
         sleep 0.1
         ((i++))
     done
@@ -270,9 +270,9 @@ gco() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓\033[0m Switched to branch: $branch 🌿\033[K"
+        echo -e "\r  \033[38;5;46m✓\033[0m $(_t success): $branch 🌿\033[K"
     else
-        echo -e "\r  \033[38;5;196m✗\033[0m Failed to switch branch\033[K"
+        echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_checkout) $(_t error)\033[K"
     fi
     echo ""
     
@@ -281,7 +281,7 @@ gco() {
 
 # Git stash with animation
 gst() {
-    echo -e "\n  \033[38;5;214m📦 Stashing changes...\033[0m"
+    echo -e "\n  \033[38;5;214m📦 $(_t git_stash)...\033[0m"
     
     local frames=("🔒" "🔐" "🔓" "🔐")
     git stash 2>&1 &
@@ -289,7 +289,7 @@ gst() {
     local i=0
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  %s Stashing..." "${frames[$((i % 4))]}"
+        printf "\r  %s $(_t git_stash)..." "${frames[$((i % 4))]}"
         sleep 0.2
         ((i++))
     done
@@ -298,9 +298,9 @@ gst() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓\033[0m Changes stashed safely! 🔒\033[K"
+        echo -e "\r  \033[38;5;46m✓\033[0m $(_t success)! 🔒\033[K"
     else
-        echo -e "\r  \033[38;5;196m✗\033[0m Stash failed\033[K"
+        echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_stash) $(_t error)\033[K"
     fi
     echo ""
     
@@ -309,7 +309,7 @@ gst() {
 
 # Git stash pop with animation
 gstp() {
-    echo -e "\n  \033[38;5;214m📦 Popping stash...\033[0m"
+    echo -e "\n  \033[38;5;214m📦 $(_t git_stash_pop)...\033[0m"
     
     local frames=("🔓" "📂" "📄" "✨")
     git stash pop 2>&1 &
@@ -317,7 +317,7 @@ gstp() {
     local i=0
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  %s Restoring..." "${frames[$((i % 4))]}"
+        printf "\r  %s $(_t git_stash_pop)..." "${frames[$((i % 4))]}"
         sleep 0.2
         ((i++))
     done
@@ -326,9 +326,9 @@ gstp() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓\033[0m Stash restored! ✨\033[K"
+        echo -e "\r  \033[38;5;46m✓\033[0m $(_t success)! ✨\033[K"
     else
-        echo -e "\r  \033[38;5;196m✗\033[0m Failed to restore stash\033[K"
+        echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_stash_pop) $(_t error)\033[K"
     fi
     echo ""
     
@@ -340,14 +340,14 @@ gm() {
     local branch="$1"
     
     if [[ -z "$branch" ]]; then
-        echo -e "  \033[38;5;196m✗ Please specify a branch to merge\033[0m"
+        echo -e "  \033[38;5;196m✗ $(_t error): $(_t specify_branch "Please specify a branch to merge")\033[0m"
         return 1
     fi
     
     echo -e "\033[38;5;177m$GIT_MERGE_ART\033[0m"
     
     local current=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-    echo -e "  \033[38;5;245mMerging:\033[0m $branch → $current"
+    echo -e "  \033[38;5;245m$(_t git_merge):\033[0m $branch → $current"
     echo ""
     
     local frames=("╭─" "├─" "├─" "╰─" "──" "▶▶")
@@ -356,7 +356,7 @@ gm() {
     local i=0
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  \033[38;5;177m%s\033[0m Merging branches..." "${frames[$((i % 6))]}"
+        printf "\r  \033[38;5;177m%s\033[0m $(_t git_merge)..." "${frames[$((i % 6))]}"
         sleep 0.15
         ((i++))
     done
@@ -365,9 +365,9 @@ gm() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓\033[0m Merge complete! 🌟\033[K"
+        echo -e "\r  \033[38;5;46m✓\033[0m $(_t success)! 🌟\033[K"
     else
-        echo -e "\r  \033[38;5;196m✗\033[0m Merge failed or has conflicts\033[K"
+        echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_merge) $(_t error)\033[K"
     fi
     echo ""
     
@@ -393,13 +393,13 @@ gss() {
     echo ""
     
     if [[ "$ahead" != "0" ]]; then
-        echo -e "  \033[38;5;46m⇡ $ahead\033[0m commits ahead of remote"
+        echo -e "  \033[38;5;46m⇡ $ahead\033[0m commits ahead"
     fi
     if [[ "$behind" != "0" ]]; then
-        echo -e "  \033[38;5;196m⇣ $behind\033[0m commits behind remote"
+        echo -e "  \033[38;5;196m⇣ $behind\033[0m commits behind"
     fi
     if [[ "$ahead" == "0" && "$behind" == "0" ]]; then
-        echo -e "  \033[38;5;46m✓\033[0m Up to date with remote"
+        echo -e "  \033[38;5;46m✓\033[0m Up to date"
     fi
     
     echo ""

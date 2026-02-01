@@ -76,7 +76,7 @@ cd() {
     target="${target/#\~/$HOME}"
     
     if [[ ! -d "$target" ]]; then
-        echo -e "  \033[38;5;196m✗ Directory not found:\033[0m $target"
+        echo -e "  \033[38;5;196m✗ $(_t dir_not_found):\033[0m $target"
         return 1
     fi
     
@@ -114,7 +114,7 @@ ll() {
     
     echo ""
     echo -e "  \033[38;5;51m╭───────────────────────────────────────╮\033[0m"
-    echo -e "  \033[38;5;51m│\033[0m         \033[1m📂 Directory Listing\033[0m          \033[38;5;51m│\033[0m"
+    echo -e "  \033[38;5;51m│\033[0m         \033[1m📂 $(_t directory_listing "Directory Listing")\033[0m          \033[38;5;51m│\033[0m"
     echo -e "  \033[38;5;51m╰───────────────────────────────────────╯\033[0m"
     echo ""
     
@@ -153,7 +153,7 @@ ll() {
         printf "    %s \033[38;5;${color}m%-30s\033[0m \033[38;5;240m%s\033[0m\n" "$icon" "$name" "$size"
     done
     
-    [[ "$has_dirs" == "false" && "$has_files" == "false" ]] && echo -e "    \033[38;5;240m(empty directory)\033[0m"
+    [[ "$has_dirs" == "false" && "$has_files" == "false" ]] && echo -e "    \033[38;5;240m($(_t empty_dir "empty directory"))\033[0m"
     
     echo ""
 }
@@ -178,7 +178,7 @@ lt() {
     local depth="${2:-2}"
     
     echo ""
-    echo -e "  \033[38;5;51m🌳 Tree view (depth: $depth)\033[0m"
+    echo -e "  \033[38;5;51m🌳 $(_t tree_view "Tree view") (depth: $depth)\033[0m"
     echo ""
     
     # Use find to create tree-like output
@@ -218,18 +218,18 @@ mkcd() {
     local dir="$1"
     
     if [[ -z "$dir" ]]; then
-        echo -e "  \033[38;5;196m✗ Please provide a directory name\033[0m"
+        echo -e "  \033[38;5;196m✗ $(_t error): $(_t specify_dir "Please provide a directory name")\033[0m"
         return 1
     fi
     
-    echo -e "  \033[38;5;51m📁 Creating:\033[0m $dir"
+    echo -e "  \033[38;5;51m📁 $(_t creating "Creating"):\033[0m $dir"
     
     mkdir -p "$dir" && cd "$dir"
     
     if [[ $? -eq 0 ]]; then
-        echo -e "  \033[38;5;46m✓\033[0m Directory created and entered! 🎉"
+        echo -e "  \033[38;5;46m✓\033[0m $(_t dir_created)! 🎉"
     else
-        echo -e "  \033[38;5;196m✗\033[0m Failed to create directory"
+        echo -e "  \033[38;5;196m✗\033[0m $(_t error)"
     fi
 }
 
@@ -242,7 +242,7 @@ DIRSTACKSIZE=10
 # Show recent directories
 recent() {
     echo ""
-    echo -e "  \033[38;5;51m📍 Recent Directories\033[0m"
+    echo -e "  \033[38;5;51m📍 $(_t recent_dirs "Recent Directories")\033[0m"
     echo ""
     
     local i=1

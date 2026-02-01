@@ -39,9 +39,9 @@ ni() {
     echo -e "\033[38;5;203m$NPM_INSTALL_ART\033[0m"
     
     if [[ -z "$packages" ]]; then
-        echo -e "  \033[38;5;245mInstalling dependencies from package.json...\033[0m"
+        echo -e "  \033[38;5;245m$(_t npm_install_deps "Installing dependencies from package.json")...\033[0m"
     else
-        echo -e "  \033[38;5;245mInstalling:\033[0m $packages"
+        echo -e "  \033[38;5;245m$(_t installing "Installing"):\033[0m $packages"
     fi
     echo ""
     
@@ -53,7 +53,7 @@ ni() {
     local i=0
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  %s Installing packages..." "${frames[$((i % 10))]}"
+        printf "\r  %s $(_t installing "Installing")..." "${frames[$((i % 10))]}"
         sleep 0.2
         ((i++))
     done
@@ -62,19 +62,19 @@ ni() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓ Installation complete!\033[0m ✨✨✨✨✨\033[K"
+        echo -e "\r  \033[38;5;46m✓ $(_t install_complete "Installation complete")!\033[0m ✨✨✨✨✨\033[K"
         echo ""
         
         # Show celebration
         for i in {1..3}; do
-            printf "\r  🎉 Packages installed successfully! 🎉"
+            printf "\r  🎉 $(_t npm_success "Packages installed successfully")! 🎉"
             sleep 0.1
-            printf "\r  ✨ Packages installed successfully! ✨"
+            printf "\r  ✨ $(_t npm_success "Packages installed successfully")! ✨"
             sleep 0.1
         done
-        printf "\r  🎉 Packages installed successfully! 🎉\033[K\n"
+        printf "\r  🎉 $(_t npm_success "Packages installed successfully")! 🎉\033[K\n"
     else
-        echo -e "\r  \033[38;5;196m✗ Installation failed\033[0m\033[K"
+        echo -e "\r  \033[38;5;196m✗ $(_t install_failed "Installation failed")\033[0m\033[K"
     fi
     echo ""
     
@@ -88,9 +88,9 @@ pi() {
     echo -e "\033[38;5;208m$NPM_INSTALL_ART\033[0m"
     
     if [[ -z "$packages" ]]; then
-        echo -e "  \033[38;5;245mInstalling dependencies from package.json...\033[0m"
+        echo -e "  \033[38;5;245m$(_t npm_install_deps "Installing dependencies from package.json")...\033[0m"
     else
-        echo -e "  \033[38;5;245mInstalling:\033[0m $packages"
+        echo -e "  \033[38;5;245m$(_t installing "Installing"):\033[0m $packages"
     fi
     echo ""
     
@@ -104,7 +104,7 @@ pi() {
     
     while kill -0 $pid 2>/dev/null; do
         local color=${colors[$((i % 10))]}
-        printf "\r  \033[38;5;${color}m%s\033[0m Installing packages..." "${frames[$((i % 10))]}"
+        printf "\r  \033[38;5;${color}m%s\033[0m $(_t installing "Installing")..." "${frames[$((i % 10))]}"
         sleep 0.1
         ((i++))
     done
@@ -113,7 +113,7 @@ pi() {
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓ pnpm install complete!\033[0m 🚀\033[K"
+        echo -e "\r  \033[38;5;46m✓ pnpm $(_t install_complete "install complete")!\033[0m 🚀\033[K"
         echo ""
         
         # Progress bar completion animation
@@ -126,7 +126,7 @@ pi() {
         done
         echo " ✨"
     else
-        echo -e "\r  \033[38;5;196m✗ pnpm install failed\033[0m\033[K"
+        echo -e "\r  \033[38;5;196m✗ pnpm $(_t install_failed "install failed")\033[0m\033[K"
     fi
     echo ""
     
@@ -162,21 +162,21 @@ dev() {
     echo ""
     
     echo -e "  \033[38;5;245m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e "  \033[38;5;46m▶ Starting development server...\033[0m"
+    echo -e "  \033[38;5;46m▶ $(_t dev_starting "Starting development server")...\033[0m"
     echo -e "  \033[38;5;245m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     echo ""
     
     # Detect package manager and run
     if [[ -f "pnpm-lock.yaml" ]]; then
-        echo -e "  \033[38;5;208m📦 Using pnpm\033[0m"
+        echo -e "  \033[38;5;208m📦 $(_t using "Using") pnpm\033[0m"
         echo ""
         pnpm run dev
     elif [[ -f "yarn.lock" ]]; then
-        echo -e "  \033[38;5;39m📦 Using yarn\033[0m"
+        echo -e "  \033[38;5;39m📦 $(_t using "Using") yarn\033[0m"
         echo ""
         yarn dev
     else
-        echo -e "  \033[38;5;203m📦 Using npm\033[0m"
+        echo -e "  \033[38;5;203m📦 $(_t using "Using") npm\033[0m"
         echo ""
         npm run dev
     fi
@@ -189,7 +189,7 @@ build() {
     # Build animation
     local tools=("🔧" "🔨" "⚙️" "🛠️" "⚡")
     
-    echo -e "  \033[38;5;245mCompiling and bundling...\033[0m"
+    echo -e "  \033[38;5;245m$(_t build_compiling "Compiling and bundling")...\033[0m"
     echo ""
     
     # Detect package manager
@@ -204,7 +204,7 @@ build() {
     
     while kill -0 $pid 2>/dev/null; do
         local elapsed=$(($(date +%s) - start_time))
-        printf "\r  %s Building... [%02d:%02d]" "${tools[$((i % 5))]}" "$((elapsed / 60))" "$((elapsed % 60))"
+        printf "\r  %s $(_t building "Building")... [%02d:%02d]" "${tools[$((i % 5))]}" "$((elapsed / 60))" "$((elapsed % 60))"
         sleep 0.2
         ((i++))
     done
@@ -214,7 +214,7 @@ build() {
     local total_time=$(($(date +%s) - start_time))
     
     if [[ $exit_code -eq 0 ]]; then
-        echo -e "\r  \033[38;5;46m✓ Build complete!\033[0m (${total_time}s) ⚡\033[K"
+        echo -e "\r  \033[38;5;46m✓ $(_t build_complete "Build complete")!\033[0m (${total_time}s) ⚡\033[K"
         echo ""
         
         # Check for dist folder and show size
@@ -226,7 +226,7 @@ build() {
             echo -e "  \033[38;5;245m📤 Output:\033[0m build/ ($size)"
         fi
     else
-        echo -e "\r  \033[38;5;196m✗ Build failed\033[0m\033[K"
+        echo -e "\r  \033[38;5;196m✗ $(_t build_failed "Build failed")\033[0m\033[K"
     fi
     echo ""
     
@@ -242,7 +242,7 @@ test() {
     [[ -f "pnpm-lock.yaml" ]] && cmd="pnpm test"
     [[ -f "yarn.lock" ]] && cmd="yarn test"
     
-    echo -e "  \033[38;5;141m🧪 Running tests...\033[0m"
+    echo -e "  \033[38;5;141m🧪 $(_t tests_running "Running tests")...\033[0m"
     echo ""
     
     eval "$cmd"
@@ -256,7 +256,7 @@ alias pr='pnpm run'
 scripts() {
     echo ""
     echo -e "  \033[38;5;51m╭───────────────────────────────────────╮\033[0m"
-    echo -e "  \033[38;5;51m│\033[0m         \033[1m📜 Available Scripts\033[0m           \033[38;5;51m│\033[0m"
+    echo -e "  \033[38;5;51m│\033[0m         \033[1m📜 $(_t available_scripts "Available Scripts")\033[0m           \033[38;5;51m│\033[0m"
     echo -e "  \033[38;5;51m╰───────────────────────────────────────╯\033[0m"
     echo ""
     
@@ -268,9 +268,9 @@ scripts() {
             Object.entries(scripts).forEach(([name, cmd]) => {
                 console.log('    ▶ \x1b[38;5;51m' + name.padEnd(20) + '\x1b[0m \x1b[38;5;245m' + cmd.substring(0, 40) + (cmd.length > 40 ? '...' : '') + '\x1b[0m');
             });
-        " 2>/dev/null || echo -e "  \033[38;5;196m✗ Could not read package.json\033[0m"
+        " 2>/dev/null || echo -e "  \033[38;5;196m✗ $(_t no_package_json "Could not read package.json")\033[0m"
     else
-        echo -e "  \033[38;5;196m✗ No package.json found\033[0m"
+        echo -e "  \033[38;5;196m✗ $(_t no_package_json "No package.json found")\033[0m"
     fi
     echo ""
 }
@@ -281,11 +281,11 @@ add() {
     local flags="${@:2}"
     
     if [[ -z "$pkg" ]]; then
-        echo -e "  \033[38;5;196m✗ Please specify a package name\033[0m"
+        echo -e "  \033[38;5;196m✗ $(_t specify_package "Please specify a package name")\033[0m"
         return 1
     fi
     
-    echo -e "\n  \033[38;5;51m📦 Adding package:\033[0m $pkg $flags"
+    echo -e "\n  \033[38;5;51m📦 $(_t adding_package "Adding package"):\033[0m $pkg $flags"
     
     if [[ -f "pnpm-lock.yaml" ]]; then
         pnpm add $pkg $flags
@@ -306,11 +306,11 @@ remove() {
     local pkg="$1"
     
     if [[ -z "$pkg" ]]; then
-        echo -e "  \033[38;5;196m✗ Please specify a package name\033[0m"
+        echo -e "  \033[38;5;196m✗ $(_t specify_package "Please specify a package name")\033[0m"
         return 1
     fi
     
-    echo -e "\n  \033[38;5;196m🗑️ Removing package:\033[0m $pkg"
+    echo -e "\n  \033[38;5;196m🗑️ $(_t removing_package "Removing package"):\033[0m $pkg"
     
     if [[ -f "pnpm-lock.yaml" ]]; then
         pnpm remove $pkg
@@ -324,7 +324,7 @@ remove() {
 # Outdated packages check
 outdated() {
     echo ""
-    echo -e "  \033[38;5;51m📦 Checking for outdated packages...\033[0m"
+    echo -e "  \033[38;5;51m📦 $(_t checking_outdated "Checking for outdated packages")...\033[0m"
     echo ""
     
     if [[ -f "pnpm-lock.yaml" ]]; then
