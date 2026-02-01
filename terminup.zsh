@@ -16,6 +16,8 @@
 TERMINUP_DIR="${0:A:h}"
 
 # Load all components
+[[ -f "$TERMINUP_DIR/components/platform.zsh" ]] && source "$TERMINUP_DIR/components/platform.zsh"
+[[ -f "$TERMINUP_DIR/components/i18n.zsh" ]] && source "$TERMINUP_DIR/components/i18n.zsh"
 [[ -f "$TERMINUP_DIR/components/colors.zsh" ]] && source "$TERMINUP_DIR/components/colors.zsh"
 [[ -f "$TERMINUP_DIR/components/animations.zsh" ]] && source "$TERMINUP_DIR/components/animations.zsh"
 [[ -f "$TERMINUP_DIR/components/git-magic.zsh" ]] && source "$TERMINUP_DIR/components/git-magic.zsh"
@@ -152,10 +154,21 @@ _tup_screen() {
     echo -e "    \033[38;5;87malock\033[0m [s]    Fullscreen analog clock"
     echo -e "    \033[38;5;87mmatrix\033[0m       Matrix rain"
     echo -e "    \033[38;5;87mpipes\033[0m        Pipes screensaver"
-    echo -e "    \033[38;5;87msyslock\033[0m      Lock Mac (system)"
+    echo -e "    \033[38;5;87msyslock\033[0m      Lock system"
     echo -e "    \033[38;5;87mautolock\033[0m [s] Auto-lock after idle"
     echo -e "    \033[38;5;240m  Shapes: circle square diamond hexagon octagon decagon\033[0m"
     echo -e "    \033[38;5;240m  Unlock: ← ↑ → ↓\033[0m"
+    echo ""
+}
+
+_tup_system() {
+    echo -e "  \033[1;38;5;226m🌍 SYSTEM & LANGUAGE\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;39mlang list\033[0m    Show available languages"
+    echo -e "    \033[38;5;39mlang set\033[0m <c> Set language (en/nl/fr/de/es...)"
+    echo -e "    \033[38;5;39mplatform\033[0m     Show platform info"
+    echo -e "    \033[38;5;39mstats\033[0m        System stats"
+    echo -e "    \033[38;5;240m  Supported: macOS, Linux (Ubuntu/Arch/Fedora), WSL\033[0m"
     echo ""
 }
 
@@ -179,8 +192,8 @@ terminup() {
             echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
             echo -e "  \033[1;38;5;51mCATEGORIES:\033[0m  \033[38;5;240mtup <category> for details\033[0m"
             echo ""
-            echo -e "    \033[38;5;46mgit\033[0m    \033[38;5;39mnav\033[0m    \033[38;5;208mnpm\033[0m    \033[38;5;177mfzf\033[0m    \033[38;5;39mddev\033[0m"
-            echo -e "    \033[38;5;213mtheme\033[0m  \033[38;5;141mextras\033[0m \033[38;5;87mscreen\033[0m \033[38;5;255mall\033[0m"
+            echo -e "    \033[38;5;46mgit\033[0m    \033[38;5;39mnav\033[0m    \033[38;5;208mnpm\033[0m    \033[38;5;177mfzf\033[0m    \033[38;5;39mddev\033[0m   \033[38;5;213mtheme\033[0m"
+            echo -e "    \033[38;5;141mextras\033[0m \033[38;5;87mscreen\033[0m \033[38;5;39msystem\033[0m \033[38;5;255mall\033[0m"
             echo ""
             echo -e "  \033[38;5;240mReload: \033[38;5;51mtups\033[38;5;240m  │  Version: \033[38;5;51mtup version\033[0m"
             echo ""
@@ -217,6 +230,10 @@ terminup() {
             _tup_header
             _tup_screen
             ;;
+        system|sys|lang|platform)
+            _tup_header
+            _tup_system
+            ;;
         all|full)
             _tup_header
             _tup_git
@@ -227,6 +244,7 @@ terminup() {
             _tup_theme
             _tup_extras
             _tup_screen
+_tup_system
             ;;
         version|--version|-v)
             echo -e "  \033[38;5;51mTerminup\033[0m v1.0.0"
