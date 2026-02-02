@@ -1045,73 +1045,43 @@ stars() {
     tput smcup
     tput civis
     stty -echo
-    clear
     
-    integer cols=$(tput cols)
-    integer rows=$(tput lines)
-    integer center_x=$((cols / 2))
-    integer center_y=$((rows / 2))
-    integer num_stars=60
-    integer i px py br ci
-    
-    # Use integer arrays to avoid debug output
-    integer -a sx sy sz
-    for ((i=1; i<=num_stars; i++)); do
-        sx[i]=$((RANDOM % cols - center_x))
-        sy[i]=$((RANDOM % rows - center_y))
-        sz[i]=$((RANDOM % 50 + 10))
-    done
+    local cols rows i x y b
+    cols=$(tput cols)
+    rows=$(tput lines)
     
     trap 'tput cnorm; tput rmcup; stty echo; return' INT TERM
     
-    printf '\033[48;5;232m\033[2J'
+    # Dark space background
+    printf '\033[48;5;16m\033[2J'
     
+    # Create star field - just draw random stars each frame
     while true; do
-        for ((i=1; i<=num_stars; i++)); do
-            # Erase old position
-            px=$(( center_x + sx[i] * 50 / sz[i] ))
-            py=$(( center_y + sy[i] * 25 / sz[i] ))
+        # Draw ~30 random stars
+        for ((i=0; i<30; i++)); do
+            x=$((RANDOM % cols))
+            y=$((RANDOM % rows))
+            b=$((RANDOM % 24 + 232))
             
-            if [[ $px -ge 0 && $px -lt $cols && $py -ge 0 && $py -lt $rows ]]; then
-                tput cup $py $px
-                printf "\033[48;5;232m \033[0m"
-            fi
-            
-            # Move star closer
-            ((sz[i] -= 2))
-            
-            # Reset if too close
-            if [[ ${sz[i]} -lt 1 ]]; then
-                sx[i]=$((RANDOM % cols - center_x))
-                sy[i]=$((RANDOM % rows - center_y))
-                sz[i]=$((RANDOM % 30 + 40))
-            fi
-            
-            # Draw at new position
-            px=$(( center_x + sx[i] * 50 / sz[i] ))
-            py=$(( center_y + sy[i] * 25 / sz[i] ))
-            
-            if [[ $px -ge 0 && $px -lt $cols && $py -ge 0 && $py -lt $rows ]]; then
-                tput cup $py $px
-                br=$((255 - sz[i] * 4))
-                [[ $br -lt 232 ]] && br=232
-                [[ $br -gt 255 ]] && br=255
-                ci=$((6 - sz[i] / 10))
-                [[ $ci -lt 1 ]] && ci=1
-                
-                # Draw star based on distance
-                case $ci in
-                    1) printf "\033[48;5;232m\033[38;5;%dm.\033[0m" "$br" ;;
-                    2) printf "\033[48;5;232m\033[38;5;%dm·\033[0m" "$br" ;;
-                    3) printf "\033[48;5;232m\033[38;5;%dm+\033[0m" "$br" ;;
-                    4) printf "\033[48;5;232m\033[38;5;%dm*\033[0m" "$br" ;;
-                    5) printf "\033[48;5;232m\033[38;5;%dm✦\033[0m" "$br" ;;
-                    *) printf "\033[48;5;232m\033[38;5;%dm★\033[0m" "$br" ;;
-                esac
+            tput cup $y $x
+            if ((b > 250)); then
+                printf "\033[48;5;16m\033[38;5;%dm✦\033[0m" "$b"
+            elif ((b > 245)); then
+                printf "\033[48;5;16m\033[38;5;%dm*\033[0m" "$b"
+            else
+                printf "\033[48;5;16m\033[38;5;%dm.\033[0m" "$b"
             fi
         done
         
-        read -t 0.04 -k 1 2>/dev/null && break
+        # Erase some random spots for twinkling effect
+        for ((i=0; i<10; i++)); do
+            x=$((RANDOM % cols))
+            y=$((RANDOM % rows))
+            tput cup $y $x
+            printf "\033[48;5;16m \033[0m"
+        done
+        
+        read -t 0.15 -k 1 2>/dev/null && break
     done
     
     tput cnorm

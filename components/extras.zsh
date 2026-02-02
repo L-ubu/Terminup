@@ -481,15 +481,30 @@ share() {
         return 1
     fi
     
+    # Check file size (most services limit to ~100MB)
+    local size=$(wc -c < "$file" 2>/dev/null)
+    if [[ $size -gt 104857600 ]]; then
+        echo -e "  \033[38;5;196m✗\033[0m File too large (max 100MB)"
+        return 1
+    fi
+    
     echo -e "  \033[38;5;51m📤 Uploading...\033[0m"
     
-    # Try 0x0.st first (reliable, no auth needed)
-    local url=$(curl -s -F "file=@$file" "https://0x0.st" 2>/dev/null)
+    local url=""
+    local filename=$(basename "$file")
     
-    # Fallback to file.io if 0x0.st fails
+    # Try litterbox.catbox.moe (reliable, allows larger files)
+    url=$(curl -s -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" "https://litterbox.catbox.moe/resources/internals/api.php" 2>/dev/null)
+    
+    # Fallback to 0x0.st
     if [[ -z "$url" || ! "$url" =~ ^https?:// ]]; then
-        local response=$(curl -s -F "file=@$file" "https://file.io" 2>/dev/null)
-        url=$(echo "$response" | grep -o '"link":"[^"]*"' | cut -d'"' -f4)
+        url=$(curl -s -F "file=@$file" "https://0x0.st" 2>/dev/null)
+    fi
+    
+    # Fallback to bashupload.com
+    if [[ -z "$url" || ! "$url" =~ ^https?:// ]]; then
+        local response=$(curl -s -T "$file" "https://bashupload.com/$filename" 2>/dev/null)
+        url=$(echo "$response" | grep -o 'https://bashupload.com/[^ ]*' | head -1)
     fi
     
     if [[ -n "$url" && "$url" =~ ^https?:// ]]; then
@@ -497,10 +512,14 @@ share() {
         echo ""
         echo -e "  \033[38;5;226mURL:\033[0m $url"
         echo ""
-        _copy "$url"
+        _copy "$url" 2>/dev/null
         echo -e "  \033[38;5;245m(Copied to clipboard)\033[0m"
     else
-        echo -e "  \033[38;5;196m✗\033[0m Upload failed - check network connection"
+        echo -e "  \033[38;5;196m✗\033[0m Upload failed"
+        echo -e "  \033[38;5;245mPossible causes:\033[0m"
+        echo -e "  \033[38;5;245m  • No internet connection\033[0m"
+        echo -e "  \033[38;5;245m  • File hosting services are down\033[0m"
+        echo -e "  \033[38;5;245m  • File type not allowed\033[0m"
     fi
 }
 
