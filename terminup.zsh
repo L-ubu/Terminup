@@ -130,18 +130,60 @@ _tup_theme() {
 }
 
 _tup_extras() {
-    echo -e "  \033[1;38;5;226m✨ EXTRAS\033[0m"
+    echo -e "  \033[1;38;5;226m✨ EXTRAS & PRODUCTIVITY\033[0m"
     echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
     echo -e "    \033[38;5;141mpomo\033[0m [mins]  Pomodoro timer"
-    echo -e "    \033[38;5;141mfocus\033[0m [mins] Focus mode with timer"
+    echo -e "    \033[38;5;141mfocus\033[0m [mins] Focus mode"
+    echo -e "    \033[38;5;141mtodo\033[0m         Todo list (add/done/rm)"
     echo -e "    \033[38;5;141mnote\033[0m [text]  Quick notes"
-    echo -e "    \033[38;5;141mquote\033[0m        Random programming quote"
-    echo -e "    \033[38;5;141mdecide\033[0m a b c Random decision"
+    echo -e "    \033[38;5;141mremind\033[0m m msg Set reminder"
+    echo -e "    \033[38;5;141mstopwatch\033[0m    Stopwatch"
     echo -e "    \033[38;5;141mstats\033[0m        System stats"
     echo -e "    \033[38;5;141mgenpass\033[0m [n]  Generate password"
-    echo -e "    \033[38;5;141mcleanup\033[0m      Quick cleanup"
+    echo -e "    \033[38;5;141mweather\033[0m      Weather forecast"
+    echo -e "    \033[38;5;141mquote\033[0m        Random quote"
     echo -e "    \033[38;5;141mspotify\033[0m      Spotify control"
-    echo -e "    \033[38;5;141mgoogle\033[0m       Web search"
+    echo ""
+}
+
+_tup_tools() {
+    echo -e "  \033[1;38;5;226m🛠️ TOOLS\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;208mcontext\033[0m      Project context info"
+    echo -e "    \033[38;5;208mwhatshere\033[0m    Analyze directory"
+    echo -e "    \033[38;5;208mblame\033[0m <file> Pretty git blame"
+    echo -e "    \033[38;5;208mprojectstats\033[0m Code statistics"
+    echo -e "    \033[38;5;208mports\033[0m        Ports in use"
+    echo -e "    \033[38;5;208mlogs\033[0m [file]  Log viewer"
+    echo -e "    \033[38;5;208mgundo\033[0m        Git undo menu"
+    echo -e "    \033[38;5;208mjpp\033[0m          JSON pretty print"
+    echo -e "    \033[38;5;208mshare\033[0m <file> Upload & share file"
+    echo -e "    \033[38;5;208mqr\033[0m <text>    Generate QR code"
+    echo -e "    \033[38;5;208mcleanup\033[0m      Quick cleanup"
+    echo ""
+}
+
+_tup_workflow() {
+    echo -e "  \033[1;38;5;226m📋 WORKFLOW\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;226mritual\033[0m       Morning routine"
+    echo -e "    \033[38;5;226meod\033[0m          End of day summary"
+    echo -e "    \033[38;5;226mstandup\033[0m      Generate standup report"
+    echo -e "    \033[38;5;226mtypetest\033[0m     Typing speed test"
+    echo -e "    \033[38;5;226mgoogle\033[0m       Google search"
+    echo -e "    \033[38;5;226mgithub\033[0m       GitHub search"
+    echo ""
+}
+
+_tup_fun() {
+    echo -e "  \033[1;38;5;226m🎮 FUN\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;39mrain\033[0m         Peaceful rain"
+    echo -e "    \033[38;5;39mfire\033[0m         Animated fire"
+    echo -e "    \033[38;5;39maquarium\033[0m     ASCII fish tank"
+    echo -e "    \033[38;5;39mstars\033[0m        Starfield"
+    echo -e "    \033[38;5;39mbounce\033[0m       DVD bounce"
+    echo -e "    \033[38;5;39mdecide\033[0m a b c Random decision"
     echo ""
 }
 
@@ -192,8 +234,9 @@ terminup() {
             echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
             echo -e "  \033[1;38;5;51mCATEGORIES:\033[0m  \033[38;5;240mtup <category> for details\033[0m"
             echo ""
-            echo -e "    \033[38;5;46mgit\033[0m    \033[38;5;39mnav\033[0m    \033[38;5;208mnpm\033[0m    \033[38;5;177mfzf\033[0m    \033[38;5;39mddev\033[0m   \033[38;5;213mtheme\033[0m"
-            echo -e "    \033[38;5;141mextras\033[0m \033[38;5;87mscreen\033[0m \033[38;5;39msystem\033[0m \033[38;5;255mall\033[0m"
+            echo -e "    \033[38;5;46mgit\033[0m     \033[38;5;39mnav\033[0m     \033[38;5;208mnpm\033[0m     \033[38;5;177mfzf\033[0m     \033[38;5;39mddev\033[0m"
+            echo -e "    \033[38;5;213mtheme\033[0m   \033[38;5;141mextras\033[0m  \033[38;5;208mtools\033[0m   \033[38;5;226mworkflow\033[0m"
+            echo -e "    \033[38;5;87mscreen\033[0m  \033[38;5;39mfun\033[0m     \033[38;5;39msystem\033[0m  \033[38;5;255mall\033[0m"
             echo ""
             echo -e "  \033[38;5;240mReload: \033[38;5;51mtups\033[38;5;240m  │  Version: \033[38;5;51mtup version\033[0m"
             echo ""
@@ -222,9 +265,21 @@ terminup() {
             _tup_header
             _tup_theme
             ;;
-        extras|extra|tools)
+        extras|extra|productivity)
             _tup_header
             _tup_extras
+            ;;
+        tools|util|utils)
+            _tup_header
+            _tup_tools
+            ;;
+        workflow|work)
+            _tup_header
+            _tup_workflow
+            ;;
+        fun|games|animations)
+            _tup_header
+            _tup_fun
             ;;
         screen|lock|screensaver)
             _tup_header
@@ -243,8 +298,11 @@ terminup() {
             _tup_ddev
             _tup_theme
             _tup_extras
+            _tup_tools
+            _tup_workflow
+            _tup_fun
             _tup_screen
-_tup_system
+            _tup_system
             ;;
         version|--version|-v)
             echo -e "  \033[38;5;51mTerminup\033[0m v1.0.0"
@@ -255,7 +313,7 @@ _tup_system
             ;;
         *)
             echo -e "  \033[38;5;196m✗\033[0m Unknown: $cmd"
-            echo -e "  \033[38;5;245mTry: tup [git|nav|npm|fzf|ddev|theme|extras|screen|all]\033[0m"
+            echo -e "  \033[38;5;245mTry: tup [git|nav|npm|extras|tools|workflow|fun|screen|all]\033[0m"
             ;;
     esac
 }

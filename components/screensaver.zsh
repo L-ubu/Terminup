@@ -823,3 +823,393 @@ pipes() {
     stty echo
     clear
 }
+
+# ═══════════════════════════════════════════════════════════════════
+# 🌧️ Rain Animation
+# ═══════════════════════════════════════════════════════════════════
+
+rain() {
+    tput smcup
+    tput civis
+    stty -echo
+    clear
+    
+    local cols=$(tput cols)
+    local rows=$(tput lines)
+    
+    # Rain drops: position and speed
+    typeset -A drops_y drops_speed drops_char
+    local num_drops=$((cols / 2))
+    local rain_chars=('│' '┃' '|' '¦' '╎' '╏')
+    local splash_chars=('·' '.' '∙' '°' '•')
+    
+    # Initialize drops
+    for ((i=1; i<=num_drops; i++)); do
+        drops_y[$i]=$((RANDOM % rows))
+        drops_speed[$i]=$((RANDOM % 3 + 1))
+        drops_char[$i]=${rain_chars[$((RANDOM % 6 + 1))]}
+    done
+    
+    trap 'tput cnorm; tput rmcup; stty echo; return' INT TERM
+    
+    while true; do
+        for ((i=1; i<=num_drops; i++)); do
+            local x=$((i * 2 % cols))
+            local y=${drops_y[$i]}
+            local speed=${drops_speed[$i]}
+            local char=${drops_char[$i]}
+            
+            # Erase old position
+            tput cup $y $x
+            printf " "
+            
+            # Move drop
+            y=$((y + speed))
+            
+            # Splash and reset
+            if [[ $y -ge $rows ]]; then
+                # Show splash
+                tput cup $((rows - 1)) $x
+                printf "\033[38;5;39m%s\033[0m" "${splash_chars[$((RANDOM % 5 + 1))]}"
+                
+                # Reset drop
+                y=0
+                drops_speed[$i]=$((RANDOM % 3 + 1))
+                drops_char[$i]=${rain_chars[$((RANDOM % 6 + 1))]}
+            fi
+            
+            drops_y[$i]=$y
+            
+            # Draw new position
+            tput cup $y $x
+            local shade=$((232 + RANDOM % 8))
+            printf "\033[38;5;%dm%s\033[0m" "$shade" "$char"
+        done
+        
+        read -t 0.05 -k 1 2>/dev/null && break
+    done
+    
+    tput cnorm
+    tput rmcup
+    stty echo
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔥 Fire Animation
+# ═══════════════════════════════════════════════════════════════════
+
+fire() {
+    tput smcup
+    tput civis
+    stty -echo
+    clear
+    
+    local cols=$(tput cols)
+    local rows=$(tput lines)
+    local height=$((rows / 2))
+    [[ $height -gt 20 ]] && height=20
+    
+    trap 'tput cnorm; tput rmcup; stty echo; return' INT TERM
+    
+    # Simpler fire - just random flames per column
+    while true; do
+        for ((row=0; row<height; row++)); do
+            tput cup $((rows - row - 1)) 0
+            for ((col=0; col<cols; col++)); do
+                local intensity=$((RANDOM % 100))
+                local fade=$((row * 8))
+                intensity=$((intensity - fade))
+                [[ $intensity -lt 0 ]] && intensity=0
+                
+                if [[ $intensity -gt 80 ]]; then
+                    echo -ne "\033[38;5;231m█\033[0m"
+                elif [[ $intensity -gt 60 ]]; then
+                    echo -ne "\033[38;5;226m▓\033[0m"
+                elif [[ $intensity -gt 40 ]]; then
+                    echo -ne "\033[38;5;208m▒\033[0m"
+                elif [[ $intensity -gt 20 ]]; then
+                    echo -ne "\033[38;5;196m░\033[0m"
+                elif [[ $intensity -gt 5 ]]; then
+                    echo -ne "\033[38;5;52m.\033[0m"
+                else
+                    echo -ne " "
+                fi
+            done
+        done
+        
+        read -t 0.1 -k 1 2>/dev/null && break
+    done
+    
+    tput cnorm
+    tput rmcup
+    stty echo
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# 🐠 Aquarium Animation
+# ═══════════════════════════════════════════════════════════════════
+
+aquarium() {
+    tput smcup
+    tput civis
+    stty -echo
+    clear
+    
+    integer cols=$(tput cols)
+    integer rows=$(tput lines)
+    integer num_fish=6
+    integer num_bubbles=8
+    
+    # Pre-define fish positions as simple integers
+    integer -a fpx fpy fdir fspd fclr
+    integer i
+    
+    for ((i=1; i<=num_fish; i++)); do
+        fpx[i]=$((RANDOM % (cols - 10) + 5))
+        fpy[i]=$((RANDOM % (rows - 4) + 2))
+        fdir[i]=$((RANDOM % 2))
+        fspd[i]=$((RANDOM % 2 + 1))
+        fclr[i]=$((RANDOM % 6 + 1))
+    done
+    
+    integer -a bpx bpy
+    for ((i=1; i<=num_bubbles; i++)); do
+        bpx[i]=$((RANDOM % cols))
+        bpy[i]=$((RANDOM % rows))
+    done
+    
+    # Color codes
+    integer -a colors
+    colors=(196 208 226 46 51 213)
+    
+    trap 'tput cnorm; tput rmcup; stty echo; return' INT TERM
+    
+    echo -e "\033[48;5;17m\033[2J"
+    
+    while true; do
+        # Bubbles
+        for ((i=1; i<=num_bubbles; i++)); do
+            tput cup ${bpy[i]} ${bpx[i]}
+            echo -ne "\033[48;5;17m \033[0m"
+            ((bpy[i]--))
+            ((bpx[i] += RANDOM % 3 - 1))
+            [[ ${bpy[i]} -lt 0 ]] && bpy[i]=$((rows - 1)) && bpx[i]=$((RANDOM % cols))
+            [[ ${bpx[i]} -lt 0 ]] && bpx[i]=0
+            [[ ${bpx[i]} -ge $cols ]] && bpx[i]=$((cols - 1))
+            tput cup ${bpy[i]} ${bpx[i]}
+            echo -ne "\033[48;5;17m\033[38;5;159m°\033[0m"
+        done
+        
+        # Fish - draw directly without intermediate variables
+        for ((i=1; i<=num_fish; i++)); do
+            # Erase old position
+            tput cup ${fpy[i]} ${fpx[i]}
+            echo -ne "\033[48;5;17m        \033[0m"
+            
+            # Move
+            if [[ ${fdir[i]} -eq 0 ]]; then
+                ((fpx[i] += fspd[i]))
+                [[ ${fpx[i]} -gt $((cols - 8)) ]] && fdir[i]=1 && fpx[i]=$((cols - 8))
+            else
+                ((fpx[i] -= fspd[i]))
+                [[ ${fpx[i]} -lt 0 ]] && fdir[i]=0 && fpx[i]=0
+            fi
+            
+            # Random Y
+            [[ $((RANDOM % 15)) -eq 0 ]] && ((fpy[i] += RANDOM % 3 - 1))
+            [[ ${fpy[i]} -lt 1 ]] && fpy[i]=1
+            [[ ${fpy[i]} -ge $((rows - 1)) ]] && fpy[i]=$((rows - 2))
+            
+            # Draw fish directly
+            tput cup ${fpy[i]} ${fpx[i]}
+            if [[ ${fdir[i]} -eq 0 ]]; then
+                echo -ne "\033[48;5;17m\033[38;5;${colors[${fclr[i]}]}m><>    \033[0m"
+            else
+                echo -ne "\033[48;5;17m\033[38;5;${colors[${fclr[i]}]}m    <><\033[0m"
+            fi
+        done
+        
+        read -t 0.12 -k 1 2>/dev/null && break
+    done
+    
+    tput cnorm
+    tput rmcup
+    stty echo
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# ⭐ Stars/Starfield Animation
+# ═══════════════════════════════════════════════════════════════════
+
+stars() {
+    tput smcup
+    tput civis
+    stty -echo
+    clear
+    
+    integer cols=$(tput cols)
+    integer rows=$(tput lines)
+    integer center_x=$((cols / 2))
+    integer center_y=$((rows / 2))
+    integer num_stars=60
+    integer i px py br ci
+    
+    # Use integer arrays to avoid debug output
+    integer -a sx sy sz
+    for ((i=1; i<=num_stars; i++)); do
+        sx[i]=$((RANDOM % cols - center_x))
+        sy[i]=$((RANDOM % rows - center_y))
+        sz[i]=$((RANDOM % 50 + 10))
+    done
+    
+    trap 'tput cnorm; tput rmcup; stty echo; return' INT TERM
+    
+    printf '\033[48;5;232m\033[2J'
+    
+    while true; do
+        for ((i=1; i<=num_stars; i++)); do
+            # Erase old position
+            px=$(( center_x + sx[i] * 50 / sz[i] ))
+            py=$(( center_y + sy[i] * 25 / sz[i] ))
+            
+            if [[ $px -ge 0 && $px -lt $cols && $py -ge 0 && $py -lt $rows ]]; then
+                tput cup $py $px
+                printf "\033[48;5;232m \033[0m"
+            fi
+            
+            # Move star closer
+            ((sz[i] -= 2))
+            
+            # Reset if too close
+            if [[ ${sz[i]} -lt 1 ]]; then
+                sx[i]=$((RANDOM % cols - center_x))
+                sy[i]=$((RANDOM % rows - center_y))
+                sz[i]=$((RANDOM % 30 + 40))
+            fi
+            
+            # Draw at new position
+            px=$(( center_x + sx[i] * 50 / sz[i] ))
+            py=$(( center_y + sy[i] * 25 / sz[i] ))
+            
+            if [[ $px -ge 0 && $px -lt $cols && $py -ge 0 && $py -lt $rows ]]; then
+                tput cup $py $px
+                br=$((255 - sz[i] * 4))
+                [[ $br -lt 232 ]] && br=232
+                [[ $br -gt 255 ]] && br=255
+                ci=$((6 - sz[i] / 10))
+                [[ $ci -lt 1 ]] && ci=1
+                
+                # Draw star based on distance
+                case $ci in
+                    1) printf "\033[48;5;232m\033[38;5;%dm.\033[0m" "$br" ;;
+                    2) printf "\033[48;5;232m\033[38;5;%dm·\033[0m" "$br" ;;
+                    3) printf "\033[48;5;232m\033[38;5;%dm+\033[0m" "$br" ;;
+                    4) printf "\033[48;5;232m\033[38;5;%dm*\033[0m" "$br" ;;
+                    5) printf "\033[48;5;232m\033[38;5;%dm✦\033[0m" "$br" ;;
+                    *) printf "\033[48;5;232m\033[38;5;%dm★\033[0m" "$br" ;;
+                esac
+            fi
+        done
+        
+        read -t 0.04 -k 1 2>/dev/null && break
+    done
+    
+    tput cnorm
+    tput rmcup
+    stty echo
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# 📀 DVD Bounce Animation
+# ═══════════════════════════════════════════════════════════════════
+
+bounce() {
+    tput smcup
+    tput civis
+    stty -echo
+    clear
+    
+    local cols=$(tput cols)
+    local rows=$(tput lines)
+    
+    local logo=(
+        "╔═══════════╗"
+        "║  D V D    ║"
+        "║   VIDEO   ║"
+        "╚═══════════╝"
+    )
+    local logo_w=13
+    local logo_h=4
+    
+    local x=$((RANDOM % (cols - logo_w)))
+    local y=$((RANDOM % (rows - logo_h)))
+    local dx=1
+    local dy=1
+    
+    local colors=(196 208 226 46 51 201 213 39 199 129)
+    local color_idx=1
+    local corner_hits=0
+    
+    trap 'tput cnorm; tput rmcup; stty echo; return' INT TERM
+    
+    while true; do
+        for ((i=0; i<logo_h; i++)); do
+            tput cup $((y + i)) $x
+            printf "%${logo_w}s" ""
+        done
+        
+        x=$((x + dx))
+        y=$((y + dy))
+        
+        local hit_wall=0
+        
+        if [[ $x -le 0 || $x -ge $((cols - logo_w)) ]]; then
+            dx=$((-dx))
+            hit_wall=1
+        fi
+        if [[ $y -le 0 || $y -ge $((rows - logo_h)) ]]; then
+            dy=$((-dy))
+            ((hit_wall++))
+        fi
+        
+        if [[ $hit_wall -gt 0 ]]; then
+            color_idx=$(( (color_idx % 10) + 1 ))
+        fi
+        
+        if [[ $hit_wall -eq 2 ]]; then
+            ((corner_hits++))
+            for ((flash=0; flash<3; flash++)); do
+                for ((i=0; i<logo_h; i++)); do
+                    tput cup $((y + i)) $x
+                    printf "\033[1;38;5;231m%s\033[0m" "${logo[$((i+1))]}"
+                done
+                sleep 0.05
+                for ((i=0; i<logo_h; i++)); do
+                    tput cup $((y + i)) $x
+                    printf "\033[38;5;${colors[$color_idx]}m%s\033[0m" "${logo[$((i+1))]}"
+                done
+                sleep 0.05
+            done
+        fi
+        
+        [[ $x -lt 0 ]] && x=0
+        [[ $y -lt 0 ]] && y=0
+        [[ $x -gt $((cols - logo_w)) ]] && x=$((cols - logo_w))
+        [[ $y -gt $((rows - logo_h)) ]] && y=$((rows - logo_h))
+        
+        local color=${colors[$color_idx]}
+        for ((i=0; i<logo_h; i++)); do
+            tput cup $((y + i)) $x
+            printf "\033[38;5;%dm%s\033[0m" "$color" "${logo[$((i+1))]}"
+        done
+        
+        tput cup 0 0
+        printf "\033[38;5;245mCorner hits: %d\033[0m" "$corner_hits"
+        
+        read -t 0.06 -k 1 2>/dev/null && break
+    done
+    
+    tput cnorm
+    tput rmcup
+    stty echo
+}

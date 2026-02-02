@@ -92,6 +92,9 @@ Every git operation comes with visual feedback:
    • Analog Clock - ASCII clock with multiple shapes
    • Matrix Rain - Falling Japanese characters
    • Pipes - Animated pipe maze
+   • Stars - Flying starfield effect
+   • Aquarium - Swimming fish animation
+   • Fire - Burning flames effect
    • Lock Screen - Fullscreen with unlock sequence
 ```
 
@@ -145,6 +148,8 @@ When you open a new terminal, Terminup greets you with:
 - System status checks
 - Git branch and project detection
 - Time-based greetings
+
+**Tip:** Press **Enter** during boot to speed up the animation!
 
 ### And More
 
@@ -268,6 +273,11 @@ Use `tup` to see all commands, or `tup <category>` for specific categories.
 | `alock [shape]` | Fullscreen analog clock |
 | `matrix` | Matrix rain effect |
 | `pipes` | Pipe maze screensaver |
+| `stars` | Flying starfield effect |
+| `aquarium` | Swimming fish animation |
+| `fire` | Burning flames effect |
+| `rain` | Rain animation |
+| `bounce` | DVD-style bouncing logo |
 | `syslock` | Lock the system |
 | `autolock [secs]` | Auto-lock after idle |
 
@@ -299,6 +309,11 @@ Use `tup` to see all commands, or `tup <category>` for specific categories.
 | `spotify` | Spotify control (macOS) |
 | `google <query>` | Web search |
 | `github <query>` | GitHub search |
+| `share <file>` | Upload & share file (get URL) |
+| `qr <text>` | Generate QR code |
+| `typetest` | Typing speed test |
+| `stopwatch` | Simple stopwatch |
+| `weather [city]` | Weather forecast |
 
 ### Themes
 
