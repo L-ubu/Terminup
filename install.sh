@@ -87,6 +87,100 @@ else
     echo -e "     Optional: ${YELLOW}brew install bat${RESET}"
 fi
 
+# ─────────────────────────────────────────────────────────────────
+# Mode Selection (all modes use lazy loading for fast startup)
+# ─────────────────────────────────────────────────────────────────
+echo ""
+echo -e "  ${CYAN}Choose your Terminup mode:${RESET}"
+echo -e "  ${PURPLE}(All modes use lazy loading - features load on first use)${RESET}"
+echo ""
+echo -e "  ${GREEN}[1] minimal${RESET} - ${YELLOW}Essential dev tools only${RESET}"
+echo -e "      ├─ git      : gc, gp, gl, gss, glog..."
+echo -e "      ├─ nav      : ll, lt, fcd, mkcd, bookmarks..."
+echo -e "      ├─ npm      : ni, pi, dev, build, scripts..."
+echo -e "      └─ ddev     : dstart, dstop, dssh..."
+echo ""
+echo -e "  ${GREEN}[2] fun${RESET} - ${YELLOW}Dev tools + visual extras${RESET}"
+echo -e "      ├─ All minimal features, plus:"
+echo -e "      ├─ animations, themes, extras (pomo, todo, notes...)"
+echo -e "      └─ screensaver (lock, matrix, pipes...), startup"
+echo ""
+echo -e "  ${GREEN}[3] full${RESET} - ${YELLOW}Everything available${RESET}"
+echo -e "      ├─ All fun features, plus:"
+echo -e "      └─ fzf power, cursor effects, completions"
+echo ""
+echo -e "  ${GREEN}[4] custom${RESET} - ${YELLOW}Pick your own components${RESET}"
+echo -e "      └─ Choose exactly which features you want"
+echo ""
+
+# Default mode
+TERMINUP_MODE="full"
+TERMINUP_CUSTOM_COMPONENTS=""
+
+read -p "     Select mode [1/2/3/4] (default: 3): " mode_choice
+case "$mode_choice" in
+    1)
+        TERMINUP_MODE="minimal"
+        print_status "Selected: minimal mode (git, nav, npm, ddev)"
+        ;;
+    2)
+        TERMINUP_MODE="fun"
+        print_status "Selected: fun mode (+ animations, themes, extras, screensaver)"
+        ;;
+    3|"")
+        TERMINUP_MODE="full"
+        print_status "Selected: full mode (everything)"
+        ;;
+    4)
+        TERMINUP_MODE="custom"
+        echo ""
+        echo -e "  ${CYAN}Available components:${RESET}"
+        echo ""
+        echo -e "    ${GREEN}Core:${RESET}"
+        echo -e "      git         - Git commands (gc, gp, gl, gss, glog...)"
+        echo -e "      nav         - Navigation (ll, lt, fcd, mkcd, bookmarks...)"
+        echo -e "      npm         - NPM/PNPM (ni, pi, dev, build, scripts...)"
+        echo -e "      ddev        - DDEV integration (dstart, dssh, dinfo...)"
+        echo ""
+        echo -e "    ${YELLOW}Enhanced:${RESET}"
+        echo -e "      fzf         - FZF power (ff, fbr, flog, fkill...)"
+        echo -e "      animations  - Text animations and spinners"
+        echo -e "      themes      - Color themes and palettes"
+        echo -e "      extras      - Productivity (pomo, todo, notes, weather...)"
+        echo ""
+        echo -e "    ${PURPLE}Fun:${RESET}"
+        echo -e "      screensaver - Lock screen, matrix, pipes, rain..."
+        echo -e "      startup     - Welcome message, ritual, standup..."
+        echo -e "      cursor      - Cursor effects"
+        echo -e "      completions - Tab completions"
+        echo ""
+        echo -e "  ${CYAN}Enter components separated by spaces:${RESET}"
+        read -p "     > " TERMINUP_CUSTOM_COMPONENTS
+        
+        if [[ -z "$TERMINUP_CUSTOM_COMPONENTS" ]]; then
+            TERMINUP_CUSTOM_COMPONENTS="git nav npm ddev"
+            print_warning "No components entered, using defaults: git nav npm ddev"
+        else
+            print_status "Selected components: $TERMINUP_CUSTOM_COMPONENTS"
+        fi
+        ;;
+    *)
+        print_warning "Invalid choice, using full mode"
+        TERMINUP_MODE="full"
+        ;;
+esac
+
+# Save mode to config file
+TERMINUP_CONFIG_DIR="$HOME/.config/terminup"
+mkdir -p "$TERMINUP_CONFIG_DIR"
+echo "TERMINUP_MODE=\"$TERMINUP_MODE\"" > "$TERMINUP_CONFIG_DIR/mode"
+
+if [[ "$TERMINUP_MODE" == "custom" ]]; then
+    echo "TERMINUP_CUSTOM_COMPONENTS=\"$TERMINUP_CUSTOM_COMPONENTS\"" > "$TERMINUP_CONFIG_DIR/components"
+fi
+
+print_status "Configuration saved to ~/.config/terminup/"
+
 # Backup existing .zshrc
 echo ""
 echo -e "  ${CYAN}Setting up configuration...${RESET}"
@@ -139,44 +233,31 @@ echo -e "${GREEN}╔════════════════════
 echo -e "${GREEN}║${RESET}              ${GREEN}✅ Installation Complete!${RESET}                    ${GREEN}║${RESET}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
+echo -e "  ${CYAN}Mode:${RESET} ${YELLOW}$TERMINUP_MODE${RESET}"
+if [[ "$TERMINUP_MODE" == "custom" ]]; then
+    echo -e "  ${CYAN}Components:${RESET} ${YELLOW}$TERMINUP_CUSTOM_COMPONENTS${RESET}"
+fi
+echo ""
+echo -e "  ${PURPLE}⚡ All features lazy-load on first use for fast startup!${RESET}"
+echo ""
 echo -e "  ${CYAN}To start using Terminup:${RESET}"
 echo ""
 echo -e "     ${YELLOW}source ~/.zshrc${RESET}    or    ${YELLOW}exec zsh${RESET}"
 echo ""
-echo -e "  ${CYAN}Available Commands:${RESET}"
+echo -e "  ${CYAN}Mode Management:${RESET}"
+echo -e "     ${GREEN}terminup_mode status${RESET}      - Show current config"
+echo -e "     ${GREEN}terminup_mode list${RESET}        - Show available modes"
+echo -e "     ${GREEN}terminup_mode components${RESET}  - Show available components"
+echo -e "     ${GREEN}terminup_mode set <mode>${RESET}  - Change mode"
+echo -e "     ${GREEN}terminup_mode custom ...${RESET}  - Set custom components"
 echo ""
-echo -e "     ${GREEN}Git:${RESET}"
-echo -e "       gc        - Animated git commit"
-echo -e "       gp        - Animated git push"
-echo -e "       gl        - Animated git pull"
-echo -e "       ga        - Animated git add"
-echo -e "       gss       - Git status overview"
-echo -e "       glog      - Pretty git log"
+echo -e "  ${CYAN}Quick Reference:${RESET}"
 echo ""
-echo -e "     ${GREEN}Navigation:${RESET}"
-echo -e "       cd        - Animated directory change"
-echo -e "       ll        - Enhanced directory listing"
-echo -e "       recent    - Show recent directories"
-echo -e "       fcd       - Fuzzy directory finder"
-echo ""
-echo -e "     ${GREEN}NPM/PNPM:${RESET}"
-echo -e "       ni        - Animated npm install"
-echo -e "       pi        - Animated pnpm install"
-echo -e "       dev       - Start dev server with animation"
-echo -e "       build     - Animated build"
-echo -e "       scripts   - List available scripts"
-echo ""
-echo -e "     ${GREEN}FZF Power:${RESET}"
-echo -e "       Ctrl+R    - Enhanced history search"
-echo -e "       ff        - Fuzzy file finder"
-echo -e "       fbr       - Git branch selector"
-echo -e "       flog      - Git log browser"
-echo -e "       fscript   - NPM script selector"
-echo ""
-echo -e "     ${GREEN}Extras:${RESET}"
-echo -e "       bm        - Bookmark current directory"
-echo -e "       jb        - Jump to bookmark"
-echo -e "       welcome   - Show welcome message"
+echo -e "     ${GREEN}Git:${RESET}        gc, gp, gl, ga, gss, glog, gb, gst"
+echo -e "     ${GREEN}Navigation:${RESET} ll, lt, fcd, mkcd, recent, bm, jb"
+echo -e "     ${GREEN}NPM/PNPM:${RESET}   ni, pi, dev, build, scripts, fscript"
+echo -e "     ${GREEN}DDEV:${RESET}       dstart, dstop, dssh, dinfo, dni, dpi"
+echo -e "     ${GREEN}Help:${RESET}       tup (shows all commands by category)"
 echo ""
 echo -e "  ${PURPLE}Enjoy your enhanced terminal! 🚀${RESET}"
 echo ""

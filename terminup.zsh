@@ -15,27 +15,242 @@
 # Source component files
 TERMINUP_DIR="${0:A:h}"
 
-# Load all components
+# ─────────────────────────────────────────────────────────────────
+# Configuration
+# ─────────────────────────────────────────────────────────────────
+# Modes: minimal | fun | full | custom
+# All modes use lazy loading for fast startup
+# Modes control which features are AVAILABLE, not when they load
+
+TERMINUP_MODE="${TERMINUP_MODE:-full}"
+TERMINUP_CONFIG_DIR="$HOME/.config/terminup"
+TERMINUP_MODE_CONFIG="$TERMINUP_CONFIG_DIR/mode"
+TERMINUP_COMPONENTS_CONFIG="$TERMINUP_CONFIG_DIR/components"
+
+# Create config dir if needed
+[[ ! -d "$TERMINUP_CONFIG_DIR" ]] && mkdir -p "$TERMINUP_CONFIG_DIR"
+
+# Load config
+[[ -f "$TERMINUP_MODE_CONFIG" ]] && source "$TERMINUP_MODE_CONFIG"
+[[ -f "$TERMINUP_COMPONENTS_CONFIG" ]] && source "$TERMINUP_COMPONENTS_CONFIG"
+
+# ─────────────────────────────────────────────────────────────────
+# Core Components (always loaded - required for basic operation)
+# ─────────────────────────────────────────────────────────────────
 [[ -f "$TERMINUP_DIR/components/platform.zsh" ]] && source "$TERMINUP_DIR/components/platform.zsh"
 [[ -f "$TERMINUP_DIR/components/i18n.zsh" ]] && source "$TERMINUP_DIR/components/i18n.zsh"
 [[ -f "$TERMINUP_DIR/components/colors.zsh" ]] && source "$TERMINUP_DIR/components/colors.zsh"
-[[ -f "$TERMINUP_DIR/components/animations.zsh" ]] && source "$TERMINUP_DIR/components/animations.zsh"
-[[ -f "$TERMINUP_DIR/components/git-magic.zsh" ]] && source "$TERMINUP_DIR/components/git-magic.zsh"
-[[ -f "$TERMINUP_DIR/components/navigation.zsh" ]] && source "$TERMINUP_DIR/components/navigation.zsh"
-[[ -f "$TERMINUP_DIR/components/npm-pnpm.zsh" ]] && source "$TERMINUP_DIR/components/npm-pnpm.zsh"
-[[ -f "$TERMINUP_DIR/components/ddev.zsh" ]] && source "$TERMINUP_DIR/components/ddev.zsh"
-[[ -f "$TERMINUP_DIR/components/fzf-power.zsh" ]] && source "$TERMINUP_DIR/components/fzf-power.zsh"
-[[ -f "$TERMINUP_DIR/components/cursor-effects.zsh" ]] && source "$TERMINUP_DIR/components/cursor-effects.zsh"
-[[ -f "$TERMINUP_DIR/components/completions.zsh" ]] && source "$TERMINUP_DIR/components/completions.zsh"
-[[ -f "$TERMINUP_DIR/components/themes.zsh" ]] && source "$TERMINUP_DIR/components/themes.zsh"
-[[ -f "$TERMINUP_DIR/components/extras.zsh" ]] && source "$TERMINUP_DIR/components/extras.zsh"
-[[ -f "$TERMINUP_DIR/components/screensaver.zsh" ]] && source "$TERMINUP_DIR/components/screensaver.zsh"
-[[ -f "$TERMINUP_DIR/components/startup.zsh" ]] && source "$TERMINUP_DIR/components/startup.zsh"
+
+# ─────────────────────────────────────────────────────────────────
+# Lazy Loading Helper
+# ─────────────────────────────────────────────────────────────────
+_terminup_lazy_load() {
+    local component="$1"
+    local trigger_functions=("${@:2}")
+    
+    for func in "${trigger_functions[@]}"; do
+        eval "
+        $func() {
+            unfunction $func 2>/dev/null
+            source \"\$TERMINUP_DIR/components/${component}.zsh\"
+            $func \"\$@\"
+        }
+        "
+    done
+}
+
+# ─────────────────────────────────────────────────────────────────
+# Component Definitions
+# ─────────────────────────────────────────────────────────────────
+# Each component and its trigger functions for lazy loading
+
+_terminup_load_component() {
+    local component="$1"
+    
+    case "$component" in
+        git)
+            _terminup_lazy_load "git-magic" gc gp gl ga gco gss gb gst gstp gm
+            ;;
+        nav)
+            _terminup_lazy_load "navigation" ll l lt fcd mkcd recent bm jb
+            ;;
+        npm)
+            _terminup_lazy_load "npm-pnpm" ni pi dev build test scripts fscript add add-dev remove outdated
+            ;;
+        ddev)
+            _terminup_lazy_load "ddev" dni dpi ddev-dev ddev-build dstart dstop drestart dssh dlogs dinfo dcomposer dartisan dmysql fddev dlist is_ddev_project ddev_status
+            ;;
+        fzf)
+            _terminup_lazy_load "fzf-power" ff fbr flog fkill fdocker
+            ;;
+        animations)
+            _terminup_lazy_load "animations" animate_text spinner progress_bar
+            ;;
+        themes)
+            _terminup_lazy_load "themes" theme colors
+            ;;
+        extras)
+            _terminup_lazy_load "extras" pomo focus todo note remind stopwatch stats genpass weather quote spotify cleanup decide
+            ;;
+        screensaver)
+            _terminup_lazy_load "screensaver" lock aclock alock matrix pipes syslock autolock rain fire aquarium stars bounce
+            ;;
+        startup)
+            _terminup_lazy_load "startup" welcome ritual eod standup
+            ;;
+        cursor)
+            _terminup_lazy_load "cursor-effects" cursor_effect
+            ;;
+        completions)
+            _terminup_lazy_load "completions" _terminup_completions
+            ;;
+    esac
+}
+
+# ─────────────────────────────────────────────────────────────────
+# Mode-based Component Loading (all lazy-loaded)
+# ─────────────────────────────────────────────────────────────────
+
+# Define which components each mode includes
+typeset -gA TERMINUP_MODE_COMPONENTS
+TERMINUP_MODE_COMPONENTS=(
+    minimal "git nav npm ddev"
+    fun "git nav npm ddev animations themes extras screensaver startup"
+    full "git nav npm ddev fzf animations themes extras screensaver startup cursor completions"
+)
+
+# Load components based on mode
+_terminup_init_mode() {
+    local mode="$1"
+    local components=""
+    
+    if [[ "$mode" == "custom" ]]; then
+        # Custom mode: use user-defined components
+        components="${TERMINUP_CUSTOM_COMPONENTS:-git nav npm}"
+    else
+        # Preset mode
+        components="${TERMINUP_MODE_COMPONENTS[$mode]}"
+    fi
+    
+    # Load each enabled component (lazy)
+    for component in ${=components}; do
+        _terminup_load_component "$component"
+    done
+}
+
+# Initialize based on current mode
+_terminup_init_mode "$TERMINUP_MODE"
 
 # Print welcome message on first load
 if [[ -z "$TERMINUP_LOADED" ]]; then
     export TERMINUP_LOADED=1
 fi
+
+# ─────────────────────────────────────────────────────────────────
+# Mode Management Commands
+# ─────────────────────────────────────────────────────────────────
+terminup_mode() {
+    local cmd="${1:-status}"
+    
+    case "$cmd" in
+        status)
+            echo ""
+            echo -e "  \033[38;5;51m╭───────────────────────────────────────╮\033[0m"
+            echo -e "  \033[38;5;51m│\033[0m      \033[1m⚙️  Terminup Configuration\033[0m       \033[38;5;51m│\033[0m"
+            echo -e "  \033[38;5;51m╰───────────────────────────────────────╯\033[0m"
+            echo ""
+            echo -e "  \033[38;5;226mCurrent mode:\033[0m \033[1m$TERMINUP_MODE\033[0m"
+            echo ""
+            if [[ "$TERMINUP_MODE" == "custom" ]]; then
+                echo -e "  \033[38;5;245mEnabled components:\033[0m"
+                for comp in ${=TERMINUP_CUSTOM_COMPONENTS}; do
+                    echo -e "    \033[38;5;46m●\033[0m $comp"
+                done
+            else
+                echo -e "  \033[38;5;245mEnabled components:\033[0m ${TERMINUP_MODE_COMPONENTS[$TERMINUP_MODE]}"
+            fi
+            echo ""
+            echo -e "  \033[38;5;245mAll features are lazy-loaded for fast startup!\033[0m"
+            echo ""
+            ;;
+        set)
+            local new_mode="$2"
+            if [[ "$new_mode" =~ ^(minimal|fun|full|custom)$ ]]; then
+                echo "TERMINUP_MODE=\"$new_mode\"" > "$TERMINUP_MODE_CONFIG"
+                echo -e "  \033[38;5;46m✓\033[0m Mode set to \033[1m$new_mode\033[0m"
+                echo -e "  \033[38;5;245mReload shell: tups\033[0m"
+            else
+                echo -e "  \033[38;5;196m✗\033[0m Invalid mode. Use: minimal, fun, full, or custom"
+            fi
+            ;;
+        list)
+            echo ""
+            echo -e "  \033[38;5;51mAvailable modes:\033[0m"
+            echo ""
+            echo -e "  \033[38;5;46m[1] minimal\033[0m"
+            echo -e "      Components: git, nav, npm, ddev"
+            echo -e "      Best for: quick tasks, slow machines"
+            echo ""
+            echo -e "  \033[38;5;226m[2] fun\033[0m"
+            echo -e "      Components: + animations, themes, extras, screensaver, startup"
+            echo -e "      Best for: daily use with visual flair"
+            echo ""
+            echo -e "  \033[38;5;213m[3] full\033[0m"
+            echo -e "      Components: + fzf, cursor effects, completions"
+            echo -e "      Best for: power users wanting everything"
+            echo ""
+            echo -e "  \033[38;5;208m[4] custom\033[0m"
+            echo -e "      Pick exactly which components you want"
+            echo -e "      Best for: specific workflows"
+            echo ""
+            ;;
+        components)
+            echo ""
+            echo -e "  \033[38;5;51mAvailable components:\033[0m"
+            echo ""
+            echo -e "    \033[38;5;46mgit\033[0m         - Git commands (gc, gp, gl, gss...)"
+            echo -e "    \033[38;5;46mnav\033[0m         - Navigation (ll, lt, fcd, mkcd...)"
+            echo -e "    \033[38;5;46mnpm\033[0m         - NPM/PNPM (ni, pi, dev, build...)"
+            echo -e "    \033[38;5;46mddev\033[0m        - DDEV integration (dstart, dssh...)"
+            echo -e "    \033[38;5;226mfzf\033[0m         - FZF power (ff, fbr, flog...)"
+            echo -e "    \033[38;5;226manimations\033[0m  - Text animations"
+            echo -e "    \033[38;5;226mthemes\033[0m      - Color themes"
+            echo -e "    \033[38;5;226mextras\033[0m      - Productivity (pomo, todo, notes...)"
+            echo -e "    \033[38;5;213mscreensaver\033[0m - Lock screen, matrix, pipes..."
+            echo -e "    \033[38;5;213mstartup\033[0m     - Welcome, ritual, standup..."
+            echo -e "    \033[38;5;213mcursor\033[0m      - Cursor effects"
+            echo -e "    \033[38;5;213mcompletions\033[0m - Tab completions"
+            echo ""
+            ;;
+        custom)
+            shift
+            local components="$*"
+            if [[ -z "$components" ]]; then
+                echo -e "  \033[38;5;245mUsage: terminup_mode custom <component1> <component2> ...\033[0m"
+                echo -e "  \033[38;5;245mExample: terminup_mode custom git nav npm ddev fzf\033[0m"
+                echo ""
+                terminup_mode components
+                return
+            fi
+            echo "TERMINUP_MODE=\"custom\"" > "$TERMINUP_MODE_CONFIG"
+            echo "TERMINUP_CUSTOM_COMPONENTS=\"$components\"" > "$TERMINUP_COMPONENTS_CONFIG"
+            echo -e "  \033[38;5;46m✓\033[0m Custom mode set with: $components"
+            echo -e "  \033[38;5;245mReload shell: tups\033[0m"
+            ;;
+        *)
+            echo ""
+            echo -e "  \033[38;5;51mUsage:\033[0m terminup_mode <command>"
+            echo ""
+            echo -e "  \033[38;5;245mCommands:\033[0m"
+            echo -e "    \033[38;5;46mstatus\033[0m              Show current configuration"
+            echo -e "    \033[38;5;46mlist\033[0m                Show available modes"
+            echo -e "    \033[38;5;46mcomponents\033[0m          Show available components"
+            echo -e "    \033[38;5;46mset\033[0m <mode>          Set mode (minimal/fun/full/custom)"
+            echo -e "    \033[38;5;46mcustom\033[0m <comp...>    Set custom components"
+            echo ""
+            ;;
+    esac
+}
 
 # ─────────────────────────────────────────────────────────────────
 # Help Command
@@ -311,9 +526,21 @@ terminup() {
             source "$TERMINUP_DIR/terminup.zsh"
             echo -e "  \033[38;5;46m✓\033[0m Terminup reloaded!"
             ;;
+        mode)
+            shift 2>/dev/null
+            terminup_mode "$@"
+            ;;
+        install|reinstall|setup)
+            echo -e "\n  \033[38;5;51m🔧 Running Terminup installer...\033[0m\n"
+            if [[ -f "$TERMINUP_DIR/install.sh" ]]; then
+                bash "$TERMINUP_DIR/install.sh"
+            else
+                echo -e "  \033[38;5;196m✗\033[0m Install script not found at $TERMINUP_DIR/install.sh"
+            fi
+            ;;
         *)
             echo -e "  \033[38;5;196m✗\033[0m Unknown: $cmd"
-            echo -e "  \033[38;5;245mTry: tup [git|nav|npm|extras|tools|workflow|fun|screen|all]\033[0m"
+            echo -e "  \033[38;5;245mTry: tup [git|nav|npm|extras|tools|workflow|fun|screen|mode|install|all]\033[0m"
             ;;
     esac
 }
@@ -321,3 +548,4 @@ terminup() {
 # Aliases for quick access
 alias tup='terminup'
 alias tups='source ~/.zshrc && echo -e "  \033[38;5;46m✓\033[0m Shell reloaded!"'
+alias tup-install='terminup install'
