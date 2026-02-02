@@ -40,7 +40,7 @@ ddev_status() {
 # ─────────────────────────────────────────────────────────────────
 
 # Smart npm - uses ddev if in ddev project
-dni() {
+dd.ni() {
     local packages="$@"
     
     if is_ddev_project; then
@@ -75,7 +75,7 @@ dni() {
 }
 
 # Smart pnpm - uses ddev if in ddev project
-dpi() {
+dd.pi() {
     local packages="$@"
     
     if is_ddev_project; then
@@ -110,7 +110,7 @@ dpi() {
 }
 
 # DDEV dev server
-ddev-dev() {
+dd.pd() {
     if ! is_ddev_project; then
         echo -e "  \033[38;5;196m✗ Not in a DDEV project\033[0m"
         return 1
@@ -140,7 +140,7 @@ ddev-dev() {
 }
 
 # DDEV build
-ddev-build() {
+dd.pb() {
     if ! is_ddev_project; then
         echo -e "  \033[38;5;196m✗ Not in a DDEV project\033[0m"
         return 1
@@ -169,7 +169,7 @@ ddev-build() {
 }
 
 # DDEV scripts list
-ddev-scripts() {
+dd.ps-list() {
     if ! is_ddev_project; then
         echo -e "  \033[38;5;196m✗ Not in a DDEV project\033[0m"
         return 1
@@ -184,8 +184,8 @@ ddev-scripts() {
     scripts
 }
 
-# Quick DDEV commands with animations
-dstart() {
+# DDEV start
+dd.start() {
     echo -e "\n  \033[38;5;39m🐳 Starting DDEV...\033[0m"
     
     local frames=("◐" "◓" "◑" "◒")
@@ -212,7 +212,8 @@ dstart() {
     echo ""
 }
 
-dstop() {
+# DDEV stop
+dd.stop() {
     echo -e "\n  \033[38;5;208m🐳 Stopping DDEV...\033[0m"
     
     local frames=("◐" "◓" "◑" "◒")
@@ -231,7 +232,8 @@ dstop() {
     echo ""
 }
 
-drestart() {
+# DDEV restart
+dd.restart() {
     echo -e "\n  \033[38;5;226m🐳 Restarting DDEV...\033[0m"
     ddev restart
     echo -e "  \033[38;5;46m✓ DDEV restarted!\033[0m 🐳"
@@ -239,19 +241,19 @@ drestart() {
 }
 
 # DDEV SSH with style
-dssh() {
+dd.ssh() {
     echo -e "\n  \033[38;5;51m🐳 Connecting to DDEV container...\033[0m\n"
     ddev ssh
 }
 
 # DDEV logs with style  
-dlogs() {
+dd.logs() {
     echo -e "\n  \033[38;5;51m🐳 DDEV Logs\033[0m\n"
     ddev logs -f
 }
 
 # DDEV describe with better formatting
-dinfo() {
+dd.describe() {
     if ! is_ddev_project; then
         echo -e "  \033[38;5;196m✗ Not in a DDEV project\033[0m"
         return 1
@@ -266,7 +268,7 @@ dinfo() {
 }
 
 # DDEV composer
-dcomposer() {
+dd.comp() {
     if ! is_ddev_project; then
         echo -e "  \033[38;5;196m✗ Not in a DDEV project\033[0m"
         return 1
@@ -276,26 +278,34 @@ dcomposer() {
     ddev composer "$@"
 }
 
-# DDEV artisan (Laravel)
-dartisan() {
+# DDEV sequelace
+dd.seq() {
     if ! is_ddev_project; then
         echo -e "  \033[38;5;196m✗ Not in a DDEV project\033[0m"
         return 1
     fi
     
-    echo -e "\n  \033[38;5;196m🔧 Running artisan inside DDEV...\033[0m\n"
-    ddev artisan "$@"
+    echo -e "\n  \033[38;5;33m🗄️ Opening sequelace...\033[0m\n"
+    ddev sequelace
 }
 
-# DDEV mysql
-dmysql() {
+# DDEV Console
+dd.c() {
     if ! is_ddev_project; then
         echo -e "  \033[38;5;196m✗ Not in a DDEV project\033[0m"
         return 1
     fi
-    
-    echo -e "\n  \033[38;5;33m🗄️ Connecting to DDEV MySQL...\033[0m\n"
-    ddev mysql
+    ddev console "$@"
+}
+
+# DDEV Console Cache Clear
+dd.cc() {
+    if ! is_ddev_project; then
+        echo -e "  \033[38;5;196m✗ Not in a DDEV project\033[0m"
+        return 1
+    fi
+    echo -e "  \033[38;5;46m🧹 Clearing Symfony cache...\033[0m"
+    ddev console cache:clear "$@"
 }
 
 # Fuzzy DDEV project selector (if multiple projects)
@@ -320,7 +330,7 @@ fddev() {
 }
 
 # List all DDEV projects
-dlist() {
+dd.list() {
     echo ""
     echo -e "  \033[38;5;51m╭───────────────────────────────────────╮\033[0m"
     echo -e "  \033[38;5;51m│\033[0m          \033[1m🐳 DDEV Projects\033[0m              \033[38;5;51m│\033[0m"
@@ -329,3 +339,33 @@ dlist() {
     ddev list
     echo ""
 }
+
+# ─────────────────────────────────────────────────────────────────
+# DDEV Main Command Dispatcher
+# ─────────────────────────────────────────────────────────────────
+
+# dd command with subcommands
+dd() {
+    if [[ $# -eq 0 ]]; then
+        ddev
+        return $?
+    fi
+
+    local cmd=$1
+    shift
+
+    case "$cmd" in
+        ni|pi|pd|pb|ps-list|start|stop|restart|ssh|logs|describe|comp|seq|c|cc|list)
+            "dd.$cmd" "$@"
+            ;;
+        *)
+            ddev "$cmd" "$@"
+            ;;
+    esac
+}
+
+# ─────────────────────────────────────────────────────────────────
+# DDEV Aliases
+# ─────────────────────────────────────────────────────────────────
+# DDEV alias for ddev
+alias dd.="ddev"
