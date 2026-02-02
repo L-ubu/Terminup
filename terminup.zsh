@@ -110,12 +110,15 @@ _tup_fzf() {
 _tup_ddev() {
     echo -e "  \033[1;38;5;226m🐳 DDEV\033[0m"
     echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
-    echo -e "    \033[38;5;39mdstart\033[0m/\033[38;5;39mdstop\033[0m Start/Stop DDEV"
-    echo -e "    \033[38;5;39mdssh\033[0m         SSH into container"
-    echo -e "    \033[38;5;39mdinfo\033[0m        Project info"
-    echo -e "    \033[38;5;39mdni\033[0m/\033[38;5;39mdpi\033[0m      DDEV npm/pnpm install"
-    echo -e "    \033[38;5;39mddev-dev\033[0m     DDEV dev server"
-    echo -e "    \033[38;5;39mfddev\033[0m        Fuzzy DDEV project selector"
+    echo -e "    \033[38;5;39mdd start\033[0m/\033[38;5;39mstop\033[0m    Start/Stop DDEV"
+    echo -e "    \033[38;5;39mdd restart\033[0m       Restart DDEV"
+    echo -e "    \033[38;5;39mdd ssh\033[0m           SSH into container"
+    echo -e "    \033[38;5;39mdd describe\033[0m      Project info"
+    echo -e "    \033[38;5;39mdd ni\033[0m/\033[38;5;39mpi\033[0m         DDEV npm/pnpm install"
+    echo -e "    \033[38;5;39mdd pd\033[0m            DDEV dev server"
+    echo -e "    \033[38;5;39mdd c\033[0m             DDEV console"
+    echo -e "    \033[38;5;39mdd cc\033[0m            DDEV cache clear"
+    echo -e "    \033[38;5;39mfddev\033[0m            Fuzzy DDEV project selector"
     echo ""
 }
 
