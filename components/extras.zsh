@@ -1144,3 +1144,750 @@ todo() {
             ;;
     esac
 }
+
+# ─────────────────────────────────────────────────────────────────
+# 👋 Welcome
+# ─────────────────────────────────────────────────────────────────
+
+welcome() {
+    local hour=$(date +%H)
+    local greeting
+    
+    if (( hour >= 5 && hour < 12 )); then
+        greeting="Good morning"
+        local emoji="☀️"
+    elif (( hour >= 12 && hour < 17 )); then
+        greeting="Good afternoon"
+        local emoji="🌤️"
+    elif (( hour >= 17 && hour < 21 )); then
+        greeting="Good evening"
+        local emoji="🌅"
+    else
+        greeting="Good night"
+        local emoji="🌙"
+    fi
+    
+    echo ""
+    echo -e "  \033[38;5;51m╭───────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;51m│\033[0m         \033[1m$emoji $greeting!\033[0m               \033[38;5;51m│\033[0m"
+    echo -e "  \033[38;5;51m╰───────────────────────────────────────╯\033[0m"
+    echo ""
+    echo -e "  \033[38;5;245m📅 $(date '+%A, %B %d, %Y')\033[0m"
+    echo -e "  \033[38;5;245m⏰ $(date '+%H:%M')\033[0m"
+    echo ""
+    
+    # Show current directory info
+    if [[ -d ".git" ]]; then
+        local branch=$(git branch --show-current 2>/dev/null)
+        echo -e "  \033[38;5;208m📂 $(basename "$PWD")\033[0m on \033[38;5;46m$branch\033[0m"
+    else
+        echo -e "  \033[38;5;208m📂 $(basename "$PWD")\033[0m"
+    fi
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🌅 Aliases for ritual (morning) and eod (night)
+# ─────────────────────────────────────────────────────────────────
+
+alias goodmorning='ritual'
+alias morning='ritual'
+alias goodnight='eod'
+alias night='eod'
+
+# ─────────────────────────────────────────────────────────────────
+# 🐍 Snake Game
+# ─────────────────────────────────────────────────────────────────
+
+snake() {
+    echo ""
+    echo -e "  \033[38;5;46m╭───────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;46m│\033[0m           \033[1m🐍 Terminal Snake\033[0m           \033[38;5;46m│\033[0m"
+    echo -e "  \033[38;5;46m╰───────────────────────────────────────╯\033[0m"
+    echo ""
+    
+    # Simple snake using arrow keys
+    local -a snake_x snake_y
+    local head_x=10 head_y=5
+    local food_x=$((RANDOM % 20 + 1)) food_y=$((RANDOM % 10 + 1))
+    local dir="right" score=0
+    local width=40 height=15
+    
+    snake_x=($head_x)
+    snake_y=($head_y)
+    
+    # Hide cursor
+    tput civis
+    trap 'tput cnorm; return' INT
+    
+    clear
+    echo -e "  \033[38;5;46m🐍 SNAKE\033[0m | Score: $score | Press q to quit"
+    echo -e "  Use arrow keys or WASD to move"
+    echo ""
+    
+    while true; do
+        # Draw border and game
+        tput cup 3 0
+        echo -n "  ┌"
+        printf '─%.0s' {1..40}
+        echo "┐"
+        
+        for ((y=1; y<=height; y++)); do
+            echo -n "  │"
+            for ((x=1; x<=width; x++)); do
+                local is_snake=0
+                for ((i=1; i<=${#snake_x[@]}; i++)); do
+                    if [[ ${snake_x[$i]} -eq $x && ${snake_y[$i]} -eq $y ]]; then
+                        if [[ $i -eq 1 ]]; then
+                            echo -ne "\033[38;5;46m●\033[0m"
+                        else
+                            echo -ne "\033[38;5;34m○\033[0m"
+                        fi
+                        is_snake=1
+                        break
+                    fi
+                done
+                if [[ $is_snake -eq 0 ]]; then
+                    if [[ $x -eq $food_x && $y -eq $food_y ]]; then
+                        echo -ne "\033[38;5;196m◆\033[0m"
+                    else
+                        echo -n " "
+                    fi
+                fi
+            done
+            echo "│"
+        done
+        
+        echo -n "  └"
+        printf '─%.0s' {1..40}
+        echo "┘"
+        
+        # Read input with timeout
+        read -t 0.15 -n 1 key 2>/dev/null
+        case "$key" in
+            w|k) [[ $dir != "down" ]] && dir="up" ;;
+            s|j) [[ $dir != "up" ]] && dir="down" ;;
+            a|h) [[ $dir != "right" ]] && dir="left" ;;
+            d|l) [[ $dir != "left" ]] && dir="right" ;;
+            $'\x1b') 
+                read -t 0.01 -n 2 arrow
+                case "$arrow" in
+                    '[A') [[ $dir != "down" ]] && dir="up" ;;
+                    '[B') [[ $dir != "up" ]] && dir="down" ;;
+                    '[D') [[ $dir != "right" ]] && dir="left" ;;
+                    '[C') [[ $dir != "left" ]] && dir="right" ;;
+                esac
+                ;;
+            q) break ;;
+        esac
+        
+        # Move snake
+        case "$dir" in
+            up) ((head_y--)) ;;
+            down) ((head_y++)) ;;
+            left) ((head_x--)) ;;
+            right) ((head_x++)) ;;
+        esac
+        
+        # Wall collision
+        if ((head_x < 1 || head_x > width || head_y < 1 || head_y > height)); then
+            tput cnorm
+            echo ""
+            echo -e "  \033[38;5;196m💀 Game Over!\033[0m Final Score: $score"
+            return
+        fi
+        
+        # Self collision
+        for ((i=2; i<=${#snake_x[@]}; i++)); do
+            if [[ ${snake_x[$i]} -eq $head_x && ${snake_y[$i]} -eq $head_y ]]; then
+                tput cnorm
+                echo ""
+                echo -e "  \033[38;5;196m💀 Game Over!\033[0m Final Score: $score"
+                return
+            fi
+        done
+        
+        # Food collision
+        if [[ $head_x -eq $food_x && $head_y -eq $food_y ]]; then
+            ((score++))
+            food_x=$((RANDOM % (width-2) + 2))
+            food_y=$((RANDOM % (height-2) + 2))
+            # Add to snake (don't remove tail)
+            snake_x=($head_x "${snake_x[@]}")
+            snake_y=($head_y "${snake_y[@]}")
+        else
+            # Move snake
+            snake_x=($head_x "${snake_x[@]:0:${#snake_x[@]}-1}")
+            snake_y=($head_y "${snake_y[@]:0:${#snake_y[@]}-1}")
+        fi
+        
+        tput cup 0 20
+        echo "Score: $score  "
+    done
+    
+    tput cnorm
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🎨 ASCII Art Generator
+# ─────────────────────────────────────────────────────────────────
+
+asciiart() {
+    local text="${*:-Hello}"
+    
+    echo ""
+    echo -e "  \033[38;5;213m╭───────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;213m│\033[0m         \033[1m🎨 ASCII Art Generator\033[0m        \033[38;5;213m│\033[0m"
+    echo -e "  \033[38;5;213m╰───────────────────────────────────────╯\033[0m"
+    echo ""
+    
+    # Simple block letters
+    local -A letters
+    letters[A]="  ██  :█  █:████:█  █:█  █"
+    letters[B]="███ :█  █:███ :█  █:███ "
+    letters[C]=" ███:█   :█   :█   : ███"
+    letters[D]="███ :█  █:█  █:█  █:███ "
+    letters[E]="████:█   :███ :█   :████"
+    letters[F]="████:█   :███ :█   :█   "
+    letters[G]=" ███:█   :█ ██:█  █: ███"
+    letters[H]="█  █:█  █:████:█  █:█  █"
+    letters[I]="███: █ : █ : █ :███"
+    letters[J]="  ██:  █:  █:█ █:██ "
+    letters[K]="█  █:█ █ :██  :█ █ :█  █"
+    letters[L]="█   :█   :█   :█   :████"
+    letters[M]="█   █:██ ██:█ █ █:█   █:█   █"
+    letters[N]="█   █:██  █:█ █ █:█  ██:█   █"
+    letters[O]=" ██ :█  █:█  █:█  █: ██ "
+    letters[P]="███ :█  █:███ :█   :█   "
+    letters[Q]=" ██ :█  █:█  █:█ █ : ███"
+    letters[R]="███ :█  █:███ :█ █ :█  █"
+    letters[S]=" ███:█   : ██ :   █:███ "
+    letters[T]="█████:  █  :  █  :  █  :  █  "
+    letters[U]="█  █:█  █:█  █:█  █: ██ "
+    letters[V]="█   █:█   █: █ █ : █ █ :  █  "
+    letters[W]="█   █:█   █:█ █ █:██ ██:█   █"
+    letters[X]="█   █: █ █ :  █  : █ █ :█   █"
+    letters[Y]="█   █: █ █ :  █  :  █  :  █  "
+    letters[Z]="█████:   █ :  █  : █   :█████"
+    letters[0]=" ██ :█  █:█  █:█  █: ██ "
+    letters[1]=" █ :██ : █ : █ :███"
+    letters[2]=" ██ :   █:  █ : █  :████"
+    letters[3]="███ :   █: ██ :   █:███ "
+    letters[4]="█  █:█  █:████:   █:   █"
+    letters[5]="████:█   :███ :   █:███ "
+    letters[6]=" ██ :█   :███ :█  █: ██ "
+    letters[7]="████:   █:  █ : █  :█   "
+    letters[8]=" ██ :█  █: ██ :█  █: ██ "
+    letters[9]=" ██ :█  █: ███:   █: ██ "
+    letters[" "]="   :   :   :   :   "
+    letters[!]=" █ : █ : █ :   : █ "
+    
+    text="${text:u}"  # Uppercase
+    
+    for row in 1 2 3 4 5; do
+        echo -n "  "
+        for ((i=0; i<${#text}; i++)); do
+            local char="${text:$i:1}"
+            local pattern="${letters[$char]:-}"
+            if [[ -n "$pattern" ]]; then
+                local line=$(echo "$pattern" | cut -d: -f$row)
+                echo -ne "\033[38;5;$((196 + i % 60))m${line}\033[0m "
+            fi
+        done
+        echo ""
+    done
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🎰 Terminal Slots
+# ─────────────────────────────────────────────────────────────────
+
+slots() {
+    echo ""
+    echo -e "  \033[38;5;226m╭───────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;226m│\033[0m           \033[1m🎰 Terminal Slots\033[0m           \033[38;5;226m│\033[0m"
+    echo -e "  \033[38;5;226m╰───────────────────────────────────────╯\033[0m"
+    echo ""
+    
+    local symbols=("🍒" "🍋" "🍊" "🍇" "⭐" "💎" "7️⃣" "🔔")
+    local -a reels
+    
+    # Spinning animation
+    for spin in {1..15}; do
+        reels=()
+        for r in 1 2 3; do
+            reels+=("${symbols[$((RANDOM % ${#symbols[@]}))]}")
+        done
+        
+        printf "\r  ┃ %s ┃ %s ┃ %s ┃" "${reels[@]}"
+        sleep 0.1
+    done
+    
+    # Final result
+    reels=()
+    for r in 1 2 3; do
+        reels+=("${symbols[$((RANDOM % ${#symbols[@]}))]}")
+    done
+    
+    echo ""
+    echo ""
+    echo -e "  ╔═══════════════════════╗"
+    echo -e "  ║  ${reels[1]}  ┃  ${reels[2]}  ┃  ${reels[3]}  ║"
+    echo -e "  ╚═══════════════════════╝"
+    echo ""
+    
+    # Check for wins
+    if [[ "${reels[1]}" == "${reels[2]}" && "${reels[2]}" == "${reels[3]}" ]]; then
+        echo -e "  \033[38;5;226m🎉 JACKPOT! THREE ${reels[1]}!\033[0m"
+        echo -e "  \033[1;5m  ★ ★ ★ WINNER! ★ ★ ★\033[0m"
+    elif [[ "${reels[1]}" == "${reels[2]}" || "${reels[2]}" == "${reels[3]}" || "${reels[1]}" == "${reels[3]}" ]]; then
+        echo -e "  \033[38;5;46m✨ Nice! Two matching!\033[0m"
+    else
+        echo -e "  \033[38;5;245mNo match. Try again!\033[0m"
+    fi
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🏆 Achievements
+# ─────────────────────────────────────────────────────────────────
+
+ACHIEVEMENTS_FILE="$HOME/.terminup_achievements"
+
+achievement() {
+    local cmd="${1:-list}"
+    
+    case "$cmd" in
+        unlock)
+            local name="$2"
+            local desc="${3:-Achievement unlocked!}"
+            if [[ -z "$name" ]]; then
+                echo -e "  \033[38;5;196m✗\033[0m Usage: achievement unlock <name> [description]"
+                return 1
+            fi
+            if ! grep -q "^$name|" "$ACHIEVEMENTS_FILE" 2>/dev/null; then
+                echo "$name|$desc|$(date '+%Y-%m-%d %H:%M')" >> "$ACHIEVEMENTS_FILE"
+                echo ""
+                echo -e "  \033[38;5;226m╭───────────────────────────────────────╮\033[0m"
+                echo -e "  \033[38;5;226m│\033[0m      \033[1m🏆 ACHIEVEMENT UNLOCKED!\033[0m         \033[38;5;226m│\033[0m"
+                echo -e "  \033[38;5;226m╰───────────────────────────────────────╯\033[0m"
+                echo ""
+                echo -e "  \033[1;38;5;226m$name\033[0m"
+                echo -e "  \033[38;5;245m$desc\033[0m"
+                echo ""
+            fi
+            ;;
+        list|ls|*)
+            echo ""
+            echo -e "  \033[38;5;226m╭───────────────────────────────────────╮\033[0m"
+            echo -e "  \033[38;5;226m│\033[0m           \033[1m🏆 Achievements\033[0m             \033[38;5;226m│\033[0m"
+            echo -e "  \033[38;5;226m╰───────────────────────────────────────╯\033[0m"
+            echo ""
+            if [[ -f "$ACHIEVEMENTS_FILE" && -s "$ACHIEVEMENTS_FILE" ]]; then
+                while IFS='|' read -r name desc date; do
+                    echo -e "    \033[38;5;226m🏆\033[0m \033[1m$name\033[0m"
+                    echo -e "       \033[38;5;245m$desc\033[0m"
+                    echo -e "       \033[38;5;240m$date\033[0m"
+                    echo ""
+                done < "$ACHIEVEMENTS_FILE"
+            else
+                echo -e "    \033[38;5;245mNo achievements yet.\033[0m"
+                echo -e "    \033[38;5;240mUnlock with: achievement unlock <name>\033[0m"
+            fi
+            echo ""
+            ;;
+    esac
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🔌 API Tester
+# ─────────────────────────────────────────────────────────────────
+
+api() {
+    local method="${1:-GET}"
+    local url="$2"
+    local data="$3"
+    
+    if [[ -z "$url" ]]; then
+        echo ""
+        echo -e "  \033[38;5;51m╭───────────────────────────────────────╮\033[0m"
+        echo -e "  \033[38;5;51m│\033[0m           \033[1m🔌 API Tester\033[0m               \033[38;5;51m│\033[0m"
+        echo -e "  \033[38;5;51m╰───────────────────────────────────────╯\033[0m"
+        echo ""
+        echo -e "  Usage:"
+        echo -e "    api GET <url>"
+        echo -e "    api POST <url> '<json>'"
+        echo -e "    api PUT <url> '<json>'"
+        echo -e "    api DELETE <url>"
+        echo ""
+        echo -e "  Examples:"
+        echo -e "    api GET https://api.github.com/users/octocat"
+        echo -e "    api POST https://httpbin.org/post '{\"test\":\"data\"}'"
+        echo ""
+        return 1
+    fi
+    
+    echo ""
+    echo -e "  \033[38;5;51m⚡ $method\033[0m $url"
+    echo ""
+    
+    local response
+    local http_code
+    
+    if [[ "$method" == "GET" || "$method" == "DELETE" ]]; then
+        response=$(curl -s -w "\n%{http_code}" -X "$method" "$url" 2>/dev/null)
+    else
+        response=$(curl -s -w "\n%{http_code}" -X "$method" -H "Content-Type: application/json" -d "$data" "$url" 2>/dev/null)
+    fi
+    
+    http_code=$(echo "$response" | tail -1)
+    response=$(echo "$response" | sed '$d')
+    
+    # Color code based on status
+    if [[ $http_code -ge 200 && $http_code -lt 300 ]]; then
+        echo -e "  \033[38;5;46m✓ Status: $http_code\033[0m"
+    elif [[ $http_code -ge 400 ]]; then
+        echo -e "  \033[38;5;196m✗ Status: $http_code\033[0m"
+    else
+        echo -e "  \033[38;5;226m● Status: $http_code\033[0m"
+    fi
+    echo ""
+    
+    # Pretty print JSON if possible
+    if command -v jq &>/dev/null; then
+        echo "$response" | jq . 2>/dev/null || echo "$response"
+    else
+        echo "$response"
+    fi
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🌈 Nyan Cat
+# ─────────────────────────────────────────────────────────────────
+
+nyan() {
+    local duration=${1:-5}
+    
+    tput civis
+    trap 'tput cnorm; return' INT
+    
+    local frames=(
+        "       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+       ░░░░░░░░░░▄▄▄▄▄▄▄▄▄▄▄▄░░░░░░░░░░░░
+ ▀▀▀▀▀░░░░░░░░░█▒▒▒▒▒▒▒▒▒▒▒▒█░░░░░░░░░░
+       ░░░░░░░░█▒▒▒▒▒▒▒▒▒▒▒▒█░░░░▄▀▀▄░░░
+   ▀▀▀▀░░░░░░░░█▒▒▒▒▒▒▒▒▒▒▒▒█░░░█░░░█░░
+       ░░░░░░░░█▒▒▒▒▒▒▒▒▒▒▒▒█░░░░▀▀▀░░░
+▀▀▀▀▀▀▀░░░░░░░░░▀▀▀▀▀▀▀▀▀▀▀▀░░░░░░░░░░░"
+        "       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+       ░░░░░░░░░░▄▄▄▄▄▄▄▄▄▄▄▄░░░░░░░░░░░░
+  ▀▀▀▀▀░░░░░░░░█▒▒▒▒▒▒▒▒▒▒▒▒█░░░░░░░░░░░
+       ░░░░░░░░█▒▒▒▒▒▒▒▒▒▒▒▒█░░░░░▄▀▀▄░░
+    ▀▀▀▀░░░░░░░█▒▒▒▒▒▒▒▒▒▒▒▒█░░░░█░░░█░░
+       ░░░░░░░░█▒▒▒▒▒▒▒▒▒▒▒▒█░░░░░▀▀▀░░░
+ ▀▀▀▀▀▀▀░░░░░░░░▀▀▀▀▀▀▀▀▀▀▀▀░░░░░░░░░░░░"
+    )
+    
+    local colors=(196 208 226 46 51 21 93)
+    local end=$((SECONDS + duration))
+    local frame=0
+    
+    while ((SECONDS < end)); do
+        clear
+        echo ""
+        echo -e "  \033[38;5;${colors[$((frame % ${#colors[@]}))]}m${frames[$((frame % 2))]}\033[0m"
+        echo ""
+        echo -e "  \033[38;5;213m♪ Nyan nyan nyan~ ♪\033[0m"
+        ((frame++))
+        sleep 0.3
+    done
+    
+    tput cnorm
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🎆 Fireworks
+# ─────────────────────────────────────────────────────────────────
+
+fireworks() {
+    local duration=${1:-5}
+    
+    tput civis
+    trap 'tput cnorm; clear; return' INT
+    
+    local colors=(196 208 226 46 51 21 93 201 213)
+    local chars=("*" "✦" "✧" "◆" "●" "★" "✴" "❋")
+    local end=$((SECONDS + duration))
+    local width=$(tput cols)
+    local height=$(tput lines)
+    
+    clear
+    
+    while ((SECONDS < end)); do
+        # Random firework position
+        local x=$((RANDOM % (width - 20) + 10))
+        local y=$((RANDOM % (height - 10) + 3))
+        local color=${colors[$((RANDOM % ${#colors[@]}))]}
+        local char=${chars[$((RANDOM % ${#chars[@]}))]}
+        
+        # Explode animation
+        for radius in 1 2 3 4; do
+            for angle in 0 45 90 135 180 225 270 315; do
+                local dx=$(echo "scale=0; s($angle*3.14159/180)*$radius" | bc -l 2>/dev/null || echo "0")
+                local dy=$(echo "scale=0; c($angle*3.14159/180)*$radius" | bc -l 2>/dev/null || echo "0")
+                local px=$((x + ${dx%.*}))
+                local py=$((y + ${dy%.*}))
+                
+                if ((px > 0 && px < width && py > 0 && py < height)); then
+                    tput cup $py $px
+                    echo -ne "\033[38;5;${color}m${char}\033[0m"
+                fi
+            done
+            sleep 0.05
+        done
+        
+        # Clear explosion
+        sleep 0.1
+        for radius in 1 2 3 4; do
+            for angle in 0 45 90 135 180 225 270 315; do
+                local dx=$((radius * (angle == 0 || angle == 45 || angle == 315 ? 1 : (angle == 135 || angle == 180 || angle == 225 ? -1 : 0))))
+                local dy=$((radius * (angle == 45 || angle == 90 || angle == 135 ? -1 : (angle == 225 || angle == 270 || angle == 315 ? 1 : 0))))
+                local px=$((x + dx))
+                local py=$((y + dy))
+                
+                if ((px > 0 && px < width && py > 0 && py < height)); then
+                    tput cup $py $px
+                    echo -n " "
+                fi
+            done
+        done
+    done
+    
+    tput cnorm
+    clear
+    echo -e "  \033[38;5;226m🎆 Happy celebrations! 🎆\033[0m"
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🕐 Clock Widget
+# ─────────────────────────────────────────────────────────────────
+
+clockwidget() {
+    local duration=${1:-10}
+    
+    tput civis
+    trap 'tput cnorm; return' INT
+    
+    local end=$((SECONDS + duration))
+    
+    while ((SECONDS < end)); do
+        local time=$(date '+%H:%M:%S')
+        local date=$(date '+%a %b %d')
+        
+        printf "\r  \033[38;5;51m🕐\033[0m \033[1;38;5;226m%s\033[0m \033[38;5;245m│\033[0m %s " "$time" "$date"
+        sleep 1
+    done
+    
+    echo ""
+    tput cnorm
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 📊 Command Stats
+# ─────────────────────────────────────────────────────────────────
+
+cmdstats() {
+    echo ""
+    echo -e "  \033[38;5;51m╭───────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;51m│\033[0m         \033[1m📊 Command Statistics\033[0m          \033[38;5;51m│\033[0m"
+    echo -e "  \033[38;5;51m╰───────────────────────────────────────╯\033[0m"
+    echo ""
+    
+    if [[ -f "$HISTFILE" ]]; then
+        echo -e "  \033[38;5;226mTop 15 Commands:\033[0m"
+        echo ""
+        
+        cat "$HISTFILE" | \
+            sed 's/^: [0-9]*:[0-9]*;//' | \
+            awk '{print $1}' | \
+            sort | uniq -c | sort -rn | head -15 | \
+            while read count cmd; do
+                local bar_len=$((count / 10))
+                [[ $bar_len -gt 30 ]] && bar_len=30
+                local bar=""
+                for ((i=0; i<bar_len; i++)); do
+                    bar+="█"
+                done
+                printf "    \033[38;5;46m%-12s\033[0m %5d \033[38;5;208m%s\033[0m\n" "$cmd" "$count" "$bar"
+            done
+        
+        echo ""
+        echo -e "  \033[38;5;245mTotal commands in history:\033[0m $(wc -l < "$HISTFILE" | tr -d ' ')"
+    else
+        echo -e "  \033[38;5;196m✗\033[0m History file not found"
+    fi
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🔗 URL Shortener
+# ─────────────────────────────────────────────────────────────────
+
+shorten() {
+    local url="$1"
+    
+    if [[ -z "$url" ]]; then
+        echo -e "  \033[38;5;196m✗\033[0m Usage: shorten <url>"
+        return 1
+    fi
+    
+    echo ""
+    echo -e "  \033[38;5;51m🔗 Shortening URL...\033[0m"
+    
+    # Using is.gd free API
+    local short=$(curl -s "https://is.gd/create.php?format=simple&url=$url" 2>/dev/null)
+    
+    if [[ -n "$short" && "$short" != "Error"* ]]; then
+        echo ""
+        echo -e "  \033[38;5;46m✓ Short URL:\033[0m $short"
+        
+        # Copy to clipboard if possible
+        if command -v pbcopy &>/dev/null; then
+            echo -n "$short" | pbcopy
+            echo -e "  \033[38;5;245m(Copied to clipboard)\033[0m"
+        elif command -v xclip &>/dev/null; then
+            echo -n "$short" | xclip -selection clipboard
+            echo -e "  \033[38;5;245m(Copied to clipboard)\033[0m"
+        fi
+    else
+        echo -e "  \033[38;5;196m✗\033[0m Failed to shorten URL"
+    fi
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 📰 Hacker News
+# ─────────────────────────────────────────────────────────────────
+
+hn() {
+    local count=${1:-10}
+    
+    echo ""
+    echo -e "  \033[38;5;208m╭───────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;208m│\033[0m           \033[1m📰 Hacker News\033[0m              \033[38;5;208m│\033[0m"
+    echo -e "  \033[38;5;208m╰───────────────────────────────────────╯\033[0m"
+    echo ""
+    
+    # Get top story IDs
+    local ids=$(curl -s "https://hacker-news.firebaseio.com/v0/topstories.json" 2>/dev/null | head -c 200)
+    
+    if [[ -z "$ids" ]]; then
+        echo -e "  \033[38;5;196m✗\033[0m Failed to fetch stories"
+        return 1
+    fi
+    
+    # Parse first N IDs (simple extraction)
+    local i=1
+    echo "$ids" | tr ',' '\n' | tr -d '[]' | head -$count | while read id; do
+        local story=$(curl -s "https://hacker-news.firebaseio.com/v0/item/${id}.json" 2>/dev/null)
+        local title=$(echo "$story" | grep -o '"title":"[^"]*"' | cut -d'"' -f4)
+        local score=$(echo "$story" | grep -o '"score":[0-9]*' | cut -d: -f2)
+        local url=$(echo "$story" | grep -o '"url":"[^"]*"' | cut -d'"' -f4)
+        
+        if [[ -n "$title" ]]; then
+            echo -e "  \033[38;5;226m$i.\033[0m $title"
+            echo -e "     \033[38;5;46m↑$score\033[0m \033[38;5;245m${url:0:50}...\033[0m"
+            echo ""
+        fi
+        ((i++))
+    done
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 😄 Dad Jokes
+# ─────────────────────────────────────────────────────────────────
+
+dadjoke() {
+    echo ""
+    echo -e "  \033[38;5;226m╭───────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;226m│\033[0m           \033[1m😄 Dad Joke\033[0m                 \033[38;5;226m│\033[0m"
+    echo -e "  \033[38;5;226m╰───────────────────────────────────────╯\033[0m"
+    echo ""
+    
+    local joke=$(curl -s -H "Accept: text/plain" "https://icanhazdadjoke.com/" 2>/dev/null)
+    
+    if [[ -n "$joke" ]]; then
+        # Word wrap the joke
+        echo "$joke" | fold -s -w 45 | while read line; do
+            echo -e "    \033[1m$line\033[0m"
+        done
+        echo ""
+        echo -e "    \033[38;5;245m😂 Ba dum tss!\033[0m"
+    else
+        # Fallback jokes
+        local jokes=(
+            "Why do programmers prefer dark mode? Because light attracts bugs!"
+            "A SQL query walks into a bar, walks up to two tables and asks... 'Can I join you?'"
+            "Why do Java developers wear glasses? Because they don't C#!"
+            "There are only 10 types of people in the world: those who understand binary and those who don't."
+            "A programmer's wife tells him: 'Go to the store and buy a loaf of bread. If they have eggs, buy a dozen.' He comes home with 12 loaves of bread."
+            "Why did the developer go broke? Because he used up all his cache!"
+            "What's a programmer's favorite hangout place? Foo Bar!"
+        )
+        local joke="${jokes[$((RANDOM % ${#jokes[@]} + 1))]}"
+        echo -e "    \033[1m$joke\033[0m"
+    fi
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🧹 Animated Clear Screen (cls)
+# ─────────────────────────────────────────────────────────────────
+
+cls() {
+    local lines=$(tput lines)
+    local cols=$(tput cols)
+    
+    # Fade out effect - gradually dim each line from bottom to top
+    for ((i=lines; i>=1; i--)); do
+        tput cup $i 0
+        # Print dimmed version of line
+        printf "\033[38;5;240m"
+        tput el  # Clear to end of line
+        sleep 0.008
+    done
+    
+    # Scroll up effect with gradient
+    local colors=(255 253 251 249 247 245 243 241 239 237 235 233)
+    
+    for color in "${colors[@]}"; do
+        printf "\033[38;5;${color}m"
+        for ((i=0; i<3; i++)); do
+            echo ""
+        done
+        sleep 0.015
+    done
+    
+    # Final clear
+    clear
+    printf "\033[0m"
+}
+
+# Alternative: Quick fade clear
+clsq() {
+    local lines=$(tput lines)
+    
+    # Quick fade - just scroll with diminishing brightness
+    for fade in 250 245 240 235 232; do
+        printf "\033[38;5;${fade}m"
+        for ((i=0; i<5; i++)); do
+            echo ""
+        done
+        sleep 0.02
+    done
+    
+    clear
+    printf "\033[0m"
+}

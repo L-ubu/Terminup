@@ -119,7 +119,7 @@ lang set de   # German
 lang set es   # Spanish
 ```
 
-Supported: 🇬🇧 English, 🇳🇱 Nederlands, 🇫🇷 Français, 🇩🇪 Deutsch, 🇪🇸 Español, 🇵🇹 Português, 🇮🇹 Italiano, 🇵🇱 Polski, 🇷🇺 Русский, 🇨🇳 中文, 🇯🇵 日本語, 🇰🇷 한국어
+Supported: 🇬🇧 English, 🇳🇱 Nederlands, 🇫🇷 Français, 🇩🇪 Deutsch, 🇪🇸 Español, 🇮🇹 Italiano
 
 ### Theme System
 
@@ -295,12 +295,13 @@ Use `tup` to see all commands, or `tup <category>` for specific categories.
 | `platform` | Show platform info |
 | `stats` | System statistics |
 
-### Extras
+### Extras & Productivity
 
 | Command | Description |
 |---------|-------------|
 | `pomo [mins]` | Pomodoro timer |
 | `focus [mins]` | Focus mode |
+| `todo` | Todo list (add/done/rm/list) |
 | `note [text]` | Quick notes |
 | `quote` | Programming quote |
 | `decide a b c` | Decision maker |
@@ -314,6 +315,39 @@ Use `tup` to see all commands, or `tup <category>` for specific categories.
 | `typetest` | Typing speed test |
 | `stopwatch` | Simple stopwatch |
 | `weather [city]` | Weather forecast |
+| `dadjoke` | Random dad/programmer joke |
+| `hn [count]` | Hacker News top stories |
+| `cmdstats` | Your most-used commands |
+| `clockwidget [secs]` | Inline clock widget |
+| `welcome` | Time-based greeting |
+| `ritual` / `morning` | Morning routine |
+| `eod` / `night` | End of day summary |
+| `standup` | Generate standup report |
+| `achievement` | Track your achievements |
+
+### Tools
+
+| Command | Description |
+|---------|-------------|
+| `api <METHOD> <url>` | API tester (GET/POST/PUT/DELETE) |
+| `shorten <url>` | URL shortener (copies to clipboard) |
+| `asciiart <text>` | Generate ASCII art from text |
+| `cls` | Clear screen with fade animation |
+| `clsq` | Quick fade clear |
+
+### Games & Fun
+
+| Command | Description |
+|---------|-------------|
+| `snake` | 🐍 Terminal snake game |
+| `slots` | 🎰 Slot machine |
+| `nyan [secs]` | 🌈 Nyan cat animation |
+| `fireworks [secs]` | 🎆 Fireworks animation |
+| `rain` | 🌧️ Rain animation |
+| `fire` | 🔥 Fire animation |
+| `aquarium` | 🐠 ASCII fish tank |
+| `stars` | ⭐ Starfield animation |
+| `bounce` | 📀 DVD bounce animation |
 
 ### Themes
 
@@ -389,7 +423,14 @@ terminup/
     ├── extras.zsh         # Productivity tools
     ├── fzf-power.zsh      # FZF integrations
     ├── git-magic.zsh      # Git enhancements
-    ├── i18n.zsh           # Internationalization
+    ├── i18n.zsh           # Internationalization core
+    ├── languages/         # Translation files
+    │   ├── en.zsh         # English
+    │   ├── nl.zsh         # Dutch
+    │   ├── fr.zsh         # French
+    │   ├── de.zsh         # German
+    │   ├── es.zsh         # Spanish
+    │   └── it.zsh         # Italian
     ├── navigation.zsh     # cd/ls improvements
     ├── npm-pnpm.zsh       # Package manager tools
     ├── platform.zsh       # Cross-platform utilities
@@ -408,7 +449,7 @@ Contributions are welcome! Whether it's:
 - New features
 - Documentation improvements
 - Theme additions
-- **Translations** (see `components/i18n.zsh`)
+- **Translations** (see `components/languages/`)
 
 ### Development Setup
 
@@ -437,14 +478,34 @@ source terminup.zsh
 
 ### Adding a Translation
 
-Edit `components/i18n.zsh`:
+1. Create a new file `components/languages/xx.zsh` (where `xx` is the language code):
 
 ```zsh
-typeset -gA _T_xx  # xx = language code
+#!/usr/bin/env zsh
+# 🌐 Your Language Translations
+
+typeset -gA _T_xx
 _T_xx=(
     welcome "Your translation"
-    # ... add all keys from _T_en
+    goodbye "Your translation"
+    # ... copy all keys from en.zsh and translate
 )
+```
+
+2. Register the language in `components/i18n.zsh`:
+
+```zsh
+# Add to TERMINUP_LANGUAGES
+TERMINUP_LANGUAGES=(
+    # ... existing languages
+    xx "Your Language Name"
+)
+
+# Add source line
+source "$_I18N_DIR/languages/xx.zsh"
+
+# Add case in _t() function
+xx) result="${_T_xx[$key]}" ;;
 ```
 
 ### Adding a Theme
