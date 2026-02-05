@@ -159,6 +159,7 @@ _T_es=(
     desc_gb "Lista de ramas"
     desc_gst "Stash / stash pop"
     desc_gm "Fusionar"
+    desc_fga "Git add fuzzy (interactivo)"
     desc_ll "Lista mejorada"
     desc_lt "Vista de árbol"
     desc_fcd "Buscador fuzzy de carpetas"
@@ -252,5 +253,6 @@ _T_es=(
     desc_dadjoke "Chiste de papá aleatorio"
     desc_welcome "Saludo según la hora"
     desc_cls "Limpiar pantalla con fade"
-)
 
+    desc_blackjack "Juego de blackjack"
+)

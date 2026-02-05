@@ -188,6 +188,7 @@ _T_it=(
     desc_gb "Lista branch"
     desc_gst "Stash / stash pop"
     desc_gm "Merge"
+    desc_fga "Git add fuzzy (interattivo)"
     desc_ll "Lista migliorata"
     desc_lt "Vista ad albero"
     desc_fcd "Ricerca fuzzy cartelle"
@@ -281,5 +282,6 @@ _T_it=(
     desc_dadjoke "Barzelletta casuale"
     desc_welcome "Saluto in base all'ora"
     desc_cls "Pulisci schermo con fade"
-)
 
+    desc_blackjack "Gioco del blackjack"
+)

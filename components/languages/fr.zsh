@@ -158,6 +158,7 @@ _T_fr=(
     desc_gb "Liste des branches"
     desc_gst "Stash / stash pop"
     desc_gm "Fusion"
+    desc_fga "Git add fuzzy (interactif)"
     desc_ll "Liste améliorée"
     desc_lt "Vue arborescente"
     desc_fcd "Recherche floue de dossier"
@@ -274,5 +275,6 @@ _T_fr=(
     desc_dadjoke "Blague de papa aléatoire"
     desc_welcome "Salutation selon l'heure"
     desc_cls "Effacer écran avec fondu"
-)
 
+    desc_blackjack "Jeu de blackjack"
+)

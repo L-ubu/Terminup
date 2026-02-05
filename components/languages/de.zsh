@@ -159,6 +159,7 @@ _T_de=(
     desc_gb "Branch Liste"
     desc_gst "Stash / Stash Pop"
     desc_gm "Merge"
+    desc_fga "Fuzzy Git Add (interaktiv)"
     desc_ll "Erweiterte Liste"
     desc_lt "Baumansicht"
     desc_fcd "Fuzzy Ordner Suche"
@@ -252,5 +253,6 @@ _T_de=(
     desc_dadjoke "Zufälliger Vaterwitz"
     desc_welcome "Zeitbasierte Begrüßung"
     desc_cls "Bildschirm mit Fade löschen"
-)
 
+    desc_blackjack "Blackjack Kartenspiel"
+)

@@ -158,6 +158,7 @@ _T_nl=(
     desc_gb "Branch lijst"
     desc_gst "Stash / stash pop"
     desc_gm "Merge"
+    desc_fga "Fuzzy git add (interactief)"
     desc_ll "Verbeterde lijst"
     desc_lt "Boomweergave"
     desc_fcd "Fuzzy map zoeker"
@@ -316,5 +317,6 @@ _T_nl=(
     desc_dadjoke "Willekeurige flauwe grap"
     desc_welcome "Tijdsgebonden begroeting"
     desc_cls "Scherm wissen met fade"
-)
 
+    desc_blackjack "Blackjack kaartspel"
+)

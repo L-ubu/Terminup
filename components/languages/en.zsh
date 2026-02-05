@@ -165,6 +165,7 @@ _T_en=(
     desc_gb "Branch list"
     desc_gst "Stash / stash pop"
     desc_gm "Merge"
+    desc_fga "Fuzzy git add (interactive)"
     desc_ll "Enhanced listing"
     desc_lt "Tree view"
     desc_fcd "Fuzzy directory finder"
@@ -323,5 +324,6 @@ _T_en=(
     desc_dadjoke "Random dad joke"
     desc_welcome "Time-based greeting"
     desc_cls "Clear screen with fade"
-)
 
+    desc_blackjack "Blackjack card game"
+)
