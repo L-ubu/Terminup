@@ -50,16 +50,16 @@ _animate_logo() {
         for ((r=1; r<=rows; r++)); do
             echo -e "\033[38;5;${color}m${TUP_LOGO_LINES[$r]}\033[0m"
         done
-        [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.03
+        [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.008
     done
     
     # Flash white then back to cyan
-    [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.05
+    [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.02
     printf "\033[${rows}A"
     for ((r=1; r<=rows; r++)); do
         echo -e "\033[1;38;5;231m${TUP_LOGO_LINES[$r]}\033[0m"
     done
-    [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.1
+    [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.03
     printf "\033[${rows}A"
     for ((r=1; r<=rows; r++)); do
         echo -e "\033[38;5;51m${TUP_LOGO_LINES[$r]}\033[0m"
@@ -84,7 +84,7 @@ _animate_logo_drop() {
         
         # Flash effect for each line
         echo -e "\033[1;38;5;231m${TUP_LOGO_LINES[$r]}\033[0m"
-        [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.08
+        [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.025
         
         # Recolor to cyan
         printf "\033[1A"
@@ -112,7 +112,7 @@ _animate_logo_type() {
             local char="${line:$c:1}"
             if [[ "$char" != " " ]]; then
                 printf "\033[38;5;51m%s\033[0m" "$char"
-                [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.008
+                [[ "$_BOOT_SKIP" != "true" ]] && sleep 0.002
             else
                 printf " "
             fi
@@ -128,7 +128,7 @@ _draw_line() {
     local width="${1:-60}"
     local char="${2:-─}"
     local color="${3:-245}"
-    local delay="${4:-0.01}"
+    local delay="${4:-0.003}"
     
     printf "  \033[38;5;${color}m"
     for ((i=0; i<width; i++)); do
@@ -146,7 +146,7 @@ _draw_line() {
 _status() {
     local message="$1"
     local stat_type="${2:-ok}"
-    local delay="${3:-0.02}"
+    local delay="${3:-0.006}"
     
     printf "  \033[38;5;245m[\033[0m"
     
@@ -307,27 +307,27 @@ terminup_startup() {
                 # Simple line-by-line reveal
                 for ((r=1; r<=${#TUP_LOGO_LINES[@]}; r++)); do
                     echo -e "\033[38;5;51m${TUP_LOGO_LINES[$r]}\033[0m"
-                    sleep 0.03
+                    sleep 0.01
                 done
                 ;;
         esac
         
         echo ""
-        _draw_line 50 "═" 51 0.02
+        _draw_line 50 "═" 51 0.005
         echo ""
         
         # Greeting
         local greeting=$(_get_greeting)
-        _status "$greeting" "info" 0.03
+        _status "$greeting" "info" 0.008
         echo ""
         
         # Boot sequence
-        _status "Initializing Terminup v1.0.0" "ok" 0.02
-        _status "Loading core modules" "ok" 0.02
-        _status "Configuring shell environment" "ok" 0.02
+        _status "Initializing Terminup v1.0.0" "ok" 0.005
+        _status "Loading core modules" "ok" 0.005
+        _status "Configuring shell environment" "ok" 0.005
         
         echo ""
-        _draw_line 50 "─" 245 0.01
+        _draw_line 50 "─" 245 0.003
         echo ""
         
         # System checks
@@ -354,10 +354,10 @@ terminup_startup() {
         fi
         
         echo ""
-        _draw_line 50 "═" 51 0.02
+        _draw_line 50 "═" 51 0.005
         echo ""
         
-        _status "All systems operational" "ok" 0.02
+        _status "All systems operational" "ok" 0.008
         printf "  \033[38;5;245mType \033[38;5;51mtup\033[38;5;245m for help\033[0m\n"
         echo ""
         
@@ -375,17 +375,44 @@ terminup_startup() {
     fi
 }
 
-# Disable startup for subsequent shells in same session
-_terminup_first_run() {
-    if [[ -z "$TERMINUP_BOOTED" ]]; then
-        export TERMINUP_BOOTED=1
-        terminup_startup
-    fi
-}
-
-# Run on load (only for interactive shells)
-[[ -o interactive ]] && _terminup_first_run
-
-# Manual trigger
+# Manual trigger aliases
 alias boot='terminup_startup full'
 alias bootmin='terminup_startup minimal'
+
+# ─────────────────────────────────────────────────────────────────
+# Auto-boot on terminal startup (runs after shell is fully ready)
+# ─────────────────────────────────────────────────────────────────
+_terminup_deferred_boot() {
+    # Remove this widget immediately
+    zle -D _terminup_deferred_boot 2>/dev/null
+    
+    # Restore original zle-line-init if it existed
+    if [[ -n "$_terminup_orig_line_init" ]]; then
+        eval "zle-line-init() { $_terminup_orig_line_init }"
+        zle -N zle-line-init
+    else
+        zle -D zle-line-init 2>/dev/null
+    fi
+    
+    # Run the boot sequence
+    terminup_startup
+    
+    # Redraw the prompt
+    zle reset-prompt 2>/dev/null
+}
+
+# Schedule boot for when the line editor is ready (unbuffered)
+if [[ -o interactive && -z "$TERMINUP_BOOTED" ]]; then
+    export TERMINUP_BOOTED=1
+    
+    # Save any existing zle-line-init
+    _terminup_orig_line_init=""
+    if [[ -n "$(zle -l | grep zle-line-init)" ]]; then
+        _terminup_orig_line_init=$(functions zle-line-init)
+    fi
+    
+    # Create widget and hook
+    zle -N _terminup_deferred_boot
+    zle-line-init() { zle _terminup_deferred_boot }
+    zle -N zle-line-init
+fi
