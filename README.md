@@ -232,6 +232,7 @@ Use `tup` to see all commands, or `tup <category>` for specific categories.
 | `gp [remote]` | Push with animation |
 | `gl [remote]` | Pull with animation |
 | `ga [files]` | Stage files |
+| `fga` | **Fuzzy git add** (interactive file selector) |
 | `gb` | List branches |
 | `gco <branch>` | Checkout branch |
 | `gss` | Status overview |
