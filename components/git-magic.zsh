@@ -224,6 +224,74 @@ ga() {
     echo ""
 }
 
+# Fuzzy git add - interactive file selector
+fga() {
+    if ! command -v fzf &>/dev/null; then
+        echo -e "  \033[38;5;196m✗\033[0m fzf required. Install with: brew install fzf"
+        return 1
+    fi
+    
+    # Get list of changed files
+    local changed=$(git status --porcelain 2>/dev/null)
+    
+    if [[ -z "$changed" ]]; then
+        echo -e "  \033[38;5;245m✓ Nothing to add - working tree clean\033[0m"
+        return 0
+    fi
+    
+    # Show header
+    echo ""
+    echo -e "  \033[38;5;208m╭───────────────────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;208m│\033[0m          \033[1;38;5;208m📂 FUZZY GIT ADD\033[0m                       \033[38;5;208m│\033[0m"
+    echo -e "  \033[38;5;208m╰───────────────────────────────────────────────────╯\033[0m"
+    echo ""
+    echo -e "  \033[38;5;245mTAB to select multiple │ ENTER to stage │ ESC to cancel\033[0m"
+    echo ""
+    
+    # Use fzf to select files with preview
+    local selected=$(git status --porcelain | \
+        fzf --multi \
+            --ansi \
+            --header="Select files to stage (TAB for multi-select)" \
+            --preview='
+                file=$(echo {} | cut -c4-)
+                status=$(echo {} | cut -c1-2)
+                echo -e "\033[38;5;51m═══ Status: $status ═══\033[0m"
+                echo ""
+                if [[ -f "$file" ]]; then
+                    git diff --color=always -- "$file" 2>/dev/null || cat "$file" 2>/dev/null | head -50
+                else
+                    echo "File deleted or binary"
+                fi
+            ' \
+            --preview-window='right:60%:wrap' \
+            --bind='ctrl-a:select-all' \
+            --bind='ctrl-d:deselect-all' \
+            --color='header:yellow,info:green,pointer:red,marker:cyan,prompt:magenta' \
+        | cut -c4-)
+    
+    if [[ -z "$selected" ]]; then
+        echo -e "  \033[38;5;245mNo files selected.\033[0m"
+        return 0
+    fi
+    
+    # Stage selected files
+    echo "$selected" | while read -r file; do
+        if [[ -n "$file" ]]; then
+            git add "$file"
+            echo -e "  \033[38;5;46m✓ Staged:\033[0m $file"
+        fi
+    done
+    
+    echo ""
+    echo -e "  \033[38;5;208m📊 Staged changes:\033[0m"
+    git diff --cached --stat | head -20
+    echo ""
+}
+
+# Alias for convenience
+alias gadd='fga'
+
 # Git branch with pretty display
 gb() {
     echo -e "\033[38;5;77m$GIT_BRANCH_ART\033[0m"
