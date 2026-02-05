@@ -1195,138 +1195,6 @@ alias morning='ritual'
 alias goodnight='eod'
 alias night='eod'
 
-# ─────────────────────────────────────────────────────────────────
-# 🐍 Snake Game
-# ─────────────────────────────────────────────────────────────────
-
-snake() {
-    echo ""
-    echo -e "  \033[38;5;46m╭───────────────────────────────────────╮\033[0m"
-    echo -e "  \033[38;5;46m│\033[0m           \033[1m🐍 Terminal Snake\033[0m           \033[38;5;46m│\033[0m"
-    echo -e "  \033[38;5;46m╰───────────────────────────────────────╯\033[0m"
-    echo ""
-    
-    # Simple snake using arrow keys
-    local -a snake_x snake_y
-    local head_x=10 head_y=5
-    local food_x=$((RANDOM % 20 + 1)) food_y=$((RANDOM % 10 + 1))
-    local dir="right" score=0
-    local width=40 height=15
-    
-    snake_x=($head_x)
-    snake_y=($head_y)
-    
-    # Hide cursor
-    tput civis
-    trap 'tput cnorm; return' INT
-    
-    clear
-    echo -e "  \033[38;5;46m🐍 SNAKE\033[0m | Score: $score | Press q to quit"
-    echo -e "  Use arrow keys or WASD to move"
-    echo ""
-    
-    while true; do
-        # Draw border and game
-        tput cup 3 0
-        echo -n "  ┌"
-        printf '─%.0s' {1..40}
-        echo "┐"
-        
-        for ((y=1; y<=height; y++)); do
-            echo -n "  │"
-            for ((x=1; x<=width; x++)); do
-                local is_snake=0
-                for ((i=1; i<=${#snake_x[@]}; i++)); do
-                    if [[ ${snake_x[$i]} -eq $x && ${snake_y[$i]} -eq $y ]]; then
-                        if [[ $i -eq 1 ]]; then
-                            echo -ne "\033[38;5;46m●\033[0m"
-                        else
-                            echo -ne "\033[38;5;34m○\033[0m"
-                        fi
-                        is_snake=1
-                        break
-                    fi
-                done
-                if [[ $is_snake -eq 0 ]]; then
-                    if [[ $x -eq $food_x && $y -eq $food_y ]]; then
-                        echo -ne "\033[38;5;196m◆\033[0m"
-                    else
-                        echo -n " "
-                    fi
-                fi
-            done
-            echo "│"
-        done
-        
-        echo -n "  └"
-        printf '─%.0s' {1..40}
-        echo "┘"
-        
-        # Read input with timeout
-        read -t 0.15 -n 1 key 2>/dev/null
-        case "$key" in
-            w|k) [[ $dir != "down" ]] && dir="up" ;;
-            s|j) [[ $dir != "up" ]] && dir="down" ;;
-            a|h) [[ $dir != "right" ]] && dir="left" ;;
-            d|l) [[ $dir != "left" ]] && dir="right" ;;
-            $'\x1b') 
-                read -t 0.01 -n 2 arrow
-                case "$arrow" in
-                    '[A') [[ $dir != "down" ]] && dir="up" ;;
-                    '[B') [[ $dir != "up" ]] && dir="down" ;;
-                    '[D') [[ $dir != "right" ]] && dir="left" ;;
-                    '[C') [[ $dir != "left" ]] && dir="right" ;;
-                esac
-                ;;
-            q) break ;;
-        esac
-        
-        # Move snake
-        case "$dir" in
-            up) ((head_y--)) ;;
-            down) ((head_y++)) ;;
-            left) ((head_x--)) ;;
-            right) ((head_x++)) ;;
-        esac
-        
-        # Wall collision
-        if ((head_x < 1 || head_x > width || head_y < 1 || head_y > height)); then
-            tput cnorm
-            echo ""
-            echo -e "  \033[38;5;196m💀 Game Over!\033[0m Final Score: $score"
-            return
-        fi
-        
-        # Self collision
-        for ((i=2; i<=${#snake_x[@]}; i++)); do
-            if [[ ${snake_x[$i]} -eq $head_x && ${snake_y[$i]} -eq $head_y ]]; then
-                tput cnorm
-                echo ""
-                echo -e "  \033[38;5;196m💀 Game Over!\033[0m Final Score: $score"
-                return
-            fi
-        done
-        
-        # Food collision
-        if [[ $head_x -eq $food_x && $head_y -eq $food_y ]]; then
-            ((score++))
-            food_x=$((RANDOM % (width-2) + 2))
-            food_y=$((RANDOM % (height-2) + 2))
-            # Add to snake (don't remove tail)
-            snake_x=($head_x "${snake_x[@]}")
-            snake_y=($head_y "${snake_y[@]}")
-        else
-            # Move snake
-            snake_x=($head_x "${snake_x[@]:0:${#snake_x[@]}-1}")
-            snake_y=($head_y "${snake_y[@]:0:${#snake_y[@]}-1}")
-        fi
-        
-        tput cup 0 20
-        echo "Score: $score  "
-    done
-    
-    tput cnorm
-}
 
 # ─────────────────────────────────────────────────────────────────
 # 🎨 ASCII Art Generator
@@ -1399,55 +1267,6 @@ asciiart() {
     echo ""
 }
 
-# ─────────────────────────────────────────────────────────────────
-# 🎰 Terminal Slots
-# ─────────────────────────────────────────────────────────────────
-
-slots() {
-    echo ""
-    echo -e "  \033[38;5;226m╭───────────────────────────────────────╮\033[0m"
-    echo -e "  \033[38;5;226m│\033[0m           \033[1m🎰 Terminal Slots\033[0m           \033[38;5;226m│\033[0m"
-    echo -e "  \033[38;5;226m╰───────────────────────────────────────╯\033[0m"
-    echo ""
-    
-    local symbols=("🍒" "🍋" "🍊" "🍇" "⭐" "💎" "7️⃣" "🔔")
-    local -a reels
-    
-    # Spinning animation
-    for spin in {1..15}; do
-        reels=()
-        for r in 1 2 3; do
-            reels+=("${symbols[$((RANDOM % ${#symbols[@]}))]}")
-        done
-        
-        printf "\r  ┃ %s ┃ %s ┃ %s ┃" "${reels[@]}"
-        sleep 0.1
-    done
-    
-    # Final result
-    reels=()
-    for r in 1 2 3; do
-        reels+=("${symbols[$((RANDOM % ${#symbols[@]}))]}")
-    done
-    
-    echo ""
-    echo ""
-    echo -e "  ╔═══════════════════════╗"
-    echo -e "  ║  ${reels[1]}  ┃  ${reels[2]}  ┃  ${reels[3]}  ║"
-    echo -e "  ╚═══════════════════════╝"
-    echo ""
-    
-    # Check for wins
-    if [[ "${reels[1]}" == "${reels[2]}" && "${reels[2]}" == "${reels[3]}" ]]; then
-        echo -e "  \033[38;5;226m🎉 JACKPOT! THREE ${reels[1]}!\033[0m"
-        echo -e "  \033[1;5m  ★ ★ ★ WINNER! ★ ★ ★\033[0m"
-    elif [[ "${reels[1]}" == "${reels[2]}" || "${reels[2]}" == "${reels[3]}" || "${reels[1]}" == "${reels[3]}" ]]; then
-        echo -e "  \033[38;5;46m✨ Nice! Two matching!\033[0m"
-    else
-        echo -e "  \033[38;5;245mNo match. Try again!\033[0m"
-    fi
-    echo ""
-}
 
 # ─────────────────────────────────────────────────────────────────
 # 🏆 Achievements
@@ -1607,68 +1426,6 @@ nyan() {
     tput cnorm
 }
 
-# ─────────────────────────────────────────────────────────────────
-# 🎆 Fireworks
-# ─────────────────────────────────────────────────────────────────
-
-fireworks() {
-    local duration=${1:-5}
-    
-    tput civis
-    trap 'tput cnorm; clear; return' INT
-    
-    local colors=(196 208 226 46 51 21 93 201 213)
-    local chars=("*" "✦" "✧" "◆" "●" "★" "✴" "❋")
-    local end=$((SECONDS + duration))
-    local width=$(tput cols)
-    local height=$(tput lines)
-    
-    clear
-    
-    while ((SECONDS < end)); do
-        # Random firework position
-        local x=$((RANDOM % (width - 20) + 10))
-        local y=$((RANDOM % (height - 10) + 3))
-        local color=${colors[$((RANDOM % ${#colors[@]}))]}
-        local char=${chars[$((RANDOM % ${#chars[@]}))]}
-        
-        # Explode animation
-        for radius in 1 2 3 4; do
-            for angle in 0 45 90 135 180 225 270 315; do
-                local dx=$(echo "scale=0; s($angle*3.14159/180)*$radius" | bc -l 2>/dev/null || echo "0")
-                local dy=$(echo "scale=0; c($angle*3.14159/180)*$radius" | bc -l 2>/dev/null || echo "0")
-                local px=$((x + ${dx%.*}))
-                local py=$((y + ${dy%.*}))
-                
-                if ((px > 0 && px < width && py > 0 && py < height)); then
-                    tput cup $py $px
-                    echo -ne "\033[38;5;${color}m${char}\033[0m"
-                fi
-            done
-            sleep 0.05
-        done
-        
-        # Clear explosion
-        sleep 0.1
-        for radius in 1 2 3 4; do
-            for angle in 0 45 90 135 180 225 270 315; do
-                local dx=$((radius * (angle == 0 || angle == 45 || angle == 315 ? 1 : (angle == 135 || angle == 180 || angle == 225 ? -1 : 0))))
-                local dy=$((radius * (angle == 45 || angle == 90 || angle == 135 ? -1 : (angle == 225 || angle == 270 || angle == 315 ? 1 : 0))))
-                local px=$((x + dx))
-                local py=$((y + dy))
-                
-                if ((px > 0 && px < width && py > 0 && py < height)); then
-                    tput cup $py $px
-                    echo -n " "
-                fi
-            done
-        done
-    done
-    
-    tput cnorm
-    clear
-    echo -e "  \033[38;5;226m🎆 Happy celebrations! 🎆\033[0m"
-}
 
 # ─────────────────────────────────────────────────────────────────
 # 🕐 Clock Widget
@@ -1890,4 +1647,449 @@ clsq() {
     
     clear
     printf "\033[0m"
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🃏 Blackjack
+# ─────────────────────────────────────────────────────────────────
+
+blackjack() {
+    local -a player_cards dealer_cards
+    local player_total=0 dealer_total=0
+    local _last_card=0
+    
+    # Seed random with something unique
+    RANDOM=$((RANDOM ^ $$))
+    
+    # Deal a card and store in _last_card (avoids subshell RANDOM issue)
+    _deal_card() {
+        _last_card=$((RANDOM % 13 + 1))
+    }
+    
+    # Get card display name
+    _card_name() {
+        case $1 in
+            1) echo "A" ;;
+            11) echo "J" ;;
+            12) echo "Q" ;;
+            13) echo "K" ;;
+            *) echo "$1" ;;
+        esac
+    }
+    
+    # Get card value
+    _card_val() {
+        case $1 in
+            1) echo 1 ;;
+            11|12|13) echo 10 ;;
+            *) echo "$1" ;;
+        esac
+    }
+    
+    # Calculate hand total (inline, no subshell)
+    _calc_total() {
+        local total=0 aces=0
+        for c in "$@"; do
+            case $c in
+                1) ((total += 1)); ((aces++)) ;;
+                11|12|13) ((total += 10)) ;;
+                *) ((total += c)) ;;
+            esac
+        done
+        while ((aces > 0 && total + 10 <= 21)); do
+            ((total += 10))
+            ((aces--))
+        done
+        _hand_value=$total
+    }
+    
+    # Format cards for display (inline)
+    _fmt_cards() {
+        _cards_str=""
+        for c in "$@"; do
+            case $c in
+                1) _cards_str+="[A] " ;;
+                11) _cards_str+="[J] " ;;
+                12) _cards_str+="[Q] " ;;
+                13) _cards_str+="[K] " ;;
+                *) _cards_str+="[$c] " ;;
+            esac
+        done
+    }
+    
+    _draw() {
+        local show_dealer=${1:-0}
+        
+        _fmt_cards "${player_cards[@]}"
+        local pcards="$_cards_str"
+        _calc_total "${player_cards[@]}"
+        local ptotal=$_hand_value
+        
+        clear
+        echo ""
+        echo -e "  \033[38;5;46m╔══════════════════════════════════════╗\033[0m"
+        echo -e "  \033[38;5;46m║\033[0m       \033[1;38;5;46m🃏 BLACKJACK 🃏\033[0m            \033[38;5;46m║\033[0m"
+        echo -e "  \033[38;5;46m╚══════════════════════════════════════╝\033[0m"
+        echo ""
+        
+        # Dealer section
+        echo -e "  \033[38;5;208m╭─ DEALER ──────────────────────────────╮\033[0m"
+        if [[ $show_dealer -eq 1 ]]; then
+            _fmt_cards "${dealer_cards[@]}"
+            local dcards="$_cards_str"
+            _calc_total "${dealer_cards[@]}"
+            local dtotal=$_hand_value
+            echo -e "  \033[38;5;208m│\033[0m  $dcards= \033[1m$dtotal\033[0m"
+        else
+            local first_card=${dealer_cards[1]}
+            case $first_card in
+                1) echo -e "  \033[38;5;208m│\033[0m  [A] [?]" ;;
+                11) echo -e "  \033[38;5;208m│\033[0m  [J] [?]" ;;
+                12) echo -e "  \033[38;5;208m│\033[0m  [Q] [?]" ;;
+                13) echo -e "  \033[38;5;208m│\033[0m  [K] [?]" ;;
+                *) echo -e "  \033[38;5;208m│\033[0m  [$first_card] [?]" ;;
+            esac
+        fi
+        echo -e "  \033[38;5;208m╰───────────────────────────────────────╯\033[0m"
+        echo ""
+        
+        # Player section
+        echo -e "  \033[38;5;51m╭─ YOU ─────────────────────────────────╮\033[0m"
+        echo -e "  \033[38;5;51m│\033[0m  $pcards= \033[1m$ptotal\033[0m"
+        echo -e "  \033[38;5;51m╰───────────────────────────────────────╯\033[0m"
+        echo ""
+    }
+    
+    # Deal initial cards (inline random, no subshell)
+    _deal_card; player_cards+=($_last_card)
+    _deal_card; player_cards+=($_last_card)
+    _deal_card; dealer_cards+=($_last_card)
+    _deal_card; dealer_cards+=($_last_card)
+    
+    _draw 0
+    _calc_total "${player_cards[@]}"
+    player_total=$_hand_value
+    
+    # Natural blackjack?
+    if [[ $player_total -eq 21 ]]; then
+        _draw 1
+        echo -e "  \033[1;38;5;226m🎉 BLACKJACK! You win! 🎉\033[0m"
+        echo ""
+        return
+    fi
+    
+    # Player's turn
+    while [[ $player_total -lt 21 ]]; do
+        echo -e "  \033[38;5;240m[H] Hit  [S] Stand  [Q] Quit\033[0m"
+        echo -ne "  \033[38;5;51m>\033[0m "
+        read -s -k 1 choice
+        
+        case "${choice:l}" in
+            h)
+                _deal_card; player_cards+=($_last_card)
+                _calc_total "${player_cards[@]}"
+                player_total=$_hand_value
+                _draw 0
+                ;;
+            s)
+                break
+                ;;
+            q)
+                echo ""
+                echo -e "  \033[38;5;245mGoodbye!\033[0m"
+                echo ""
+                return
+                ;;
+            *)
+                _draw 0
+                ;;
+        esac
+    done
+    
+    # Bust check
+    if [[ $player_total -gt 21 ]]; then
+        _draw 1
+        echo -e "  \033[1;38;5;196m💥 BUST! Dealer wins.\033[0m"
+        echo ""
+        return
+    fi
+    
+    # Dealer's turn
+    _draw 1
+    echo -e "  \033[38;5;208mDealer reveals...\033[0m"
+    sleep 0.6
+    
+    _calc_total "${dealer_cards[@]}"
+    dealer_total=$_hand_value
+    while [[ $dealer_total -lt 17 ]]; do
+        sleep 0.7
+        _deal_card; dealer_cards+=($_last_card)
+        _calc_total "${dealer_cards[@]}"
+        dealer_total=$_hand_value
+        _draw 1
+        echo -e "  \033[38;5;208mDealer hits!\033[0m"
+    done
+    
+    sleep 0.4
+    _draw 1
+    
+    # Winner
+    if [[ $dealer_total -gt 21 ]]; then
+        echo -e "  \033[1;38;5;46m🎉 Dealer BUSTS! You WIN! 🎉\033[0m"
+    elif [[ $dealer_total -gt $player_total ]]; then
+        echo -e "  \033[1;38;5;196m😔 Dealer wins ($dealer_total vs $player_total)\033[0m"
+    elif [[ $dealer_total -lt $player_total ]]; then
+        echo -e "  \033[1;38;5;46m🎉 You WIN! ($player_total vs $dealer_total) 🎉\033[0m"
+    else
+        echo -e "  \033[1;38;5;226m🤝 PUSH! Tie at $player_total\033[0m"
+    fi
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🎰 Terminal Slots with emoji and win animation
+# ─────────────────────────────────────────────────────────────────
+
+slots() {
+    local -a symbols=("🍒" "🍋" "🍊" "🍇" "⭐" "💎" "7️⃣" "🔔")
+    local slot1 slot2 slot3
+    
+    tput civis 2>/dev/null
+    clear
+    
+    echo ""
+    echo -e "  \033[38;5;226m╔═══════════════════════════════════════════╗\033[0m"
+    echo -e "  \033[38;5;226m║\033[0m        \033[1;38;5;226m🎰 TERMINAL SLOTS 🎰\033[0m           \033[38;5;226m║\033[0m"
+    echo -e "  \033[38;5;226m╚═══════════════════════════════════════════╝\033[0m"
+    echo ""
+    echo ""
+    
+    # Spinning animation with proper positioning
+    for spin in {1..20}; do
+        slot1="${symbols[$((RANDOM % 8 + 1))]}"
+        slot2="${symbols[$((RANDOM % 8 + 1))]}"
+        slot3="${symbols[$((RANDOM % 8 + 1))]}"
+        
+        tput cup 5 0
+        echo -e "  \033[38;5;245m╔═════════╦═════════╦═════════╗\033[0m"
+        echo -e "  \033[38;5;245m║\033[0m   $slot1    \033[38;5;245m║\033[0m   $slot2    \033[38;5;245m║\033[0m   $slot3    \033[38;5;245m║\033[0m"
+        echo -e "  \033[38;5;245m╚═════════╩═════════╩═════════╝\033[0m"
+        
+        # Slow down near the end
+        if ((spin < 10)); then
+            sleep 0.06
+        elif ((spin < 15)); then
+            sleep 0.1
+        else
+            sleep 0.15
+        fi
+    done
+    
+    # Final result
+    slot1="${symbols[$((RANDOM % 8 + 1))]}"
+    slot2="${symbols[$((RANDOM % 8 + 1))]}"
+    slot3="${symbols[$((RANDOM % 8 + 1))]}"
+    
+    tput cup 5 0
+    echo -e "  \033[38;5;226m╔═════════╦═════════╦═════════╗\033[0m"
+    echo -e "  \033[38;5;226m║\033[0m   $slot1    \033[38;5;226m║\033[0m   $slot2    \033[38;5;226m║\033[0m   $slot3    \033[38;5;226m║\033[0m"
+    echo -e "  \033[38;5;226m╚═════════╩═════════╩═════════╝\033[0m"
+    echo ""
+    echo ""
+    
+    # Check for wins
+    if [[ "$slot1" == "$slot2" && "$slot2" == "$slot3" ]]; then
+        # JACKPOT animation!
+        for flash in {1..8}; do
+            tput cup 10 0
+            if ((flash % 2 == 0)); then
+                echo -e "  \033[1;5;38;5;226m🎉🎉🎉 JACKPOT!!! THREE $slot1 🎉🎉🎉\033[0m"
+                echo -e "  \033[1;38;5;196m   ★ ★ ★ ★ ★ WINNER! ★ ★ ★ ★ ★\033[0m"
+                echo -e "  \033[38;5;226m💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰\033[0m"
+            else
+                echo -e "  \033[1;5;38;5;196m🎉🎉🎉 JACKPOT!!! THREE $slot1 🎉🎉🎉\033[0m"
+                echo -e "  \033[1;38;5;226m   ★ ★ ★ ★ ★ WINNER! ★ ★ ★ ★ ★\033[0m"
+                echo -e "  \033[38;5;46m💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰\033[0m"
+            fi
+            sleep 0.2
+        done
+        # Coin shower effect
+        echo ""
+        for i in {1..3}; do
+            echo -e "  \033[38;5;226m    🪙  💵  🪙  💵  🪙  💵  🪙  💵  🪙\033[0m"
+            sleep 0.1
+        done
+    elif [[ "$slot1" == "$slot2" || "$slot2" == "$slot3" || "$slot1" == "$slot3" ]]; then
+        # Two matching - nice win
+        echo -e "  \033[38;5;46m✨✨ Nice! Two matching! ✨✨\033[0m"
+        echo -e "  \033[38;5;226m   🎊 Small win! 🎊\033[0m"
+    else
+        echo -e "  \033[38;5;245m😔 No match. Try again!\033[0m"
+        echo -e "  \033[38;5;240m   Better luck next time!\033[0m"
+    fi
+    
+    echo ""
+    tput cnorm 2>/dev/null
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🐍 Fixed Snake
+# ─────────────────────────────────────────────────────────────────
+
+snake() {
+    local width=30 height=12
+    local head_x=15 head_y=6
+    local food_x=$((RANDOM % (width-2) + 2))
+    local food_y=$((RANDOM % (height-2) + 2))
+    local dir="right" score=0 game_over=0
+    local -a body_x body_y
+    body_x=($head_x)
+    body_y=($head_y)
+    
+    tput civis
+    stty -echo 2>/dev/null
+    trap 'stty echo 2>/dev/null; tput cnorm; return' INT EXIT
+    
+    clear
+    
+    while [[ $game_over -eq 0 ]]; do
+        tput cup 0 0
+        echo -e "  \033[38;5;46m🐍 SNAKE\033[0m  Score: $score  [q=quit, wasd=move]"
+        echo ""
+        
+        printf "  +"
+        printf -- "-%.0s" $(seq 1 $width)
+        echo "+"
+        
+        for ((y=1; y<=height; y++)); do
+            printf "  |"
+            for ((x=1; x<=width; x++)); do
+                local cell=" "
+                
+                [[ $x -eq $food_x && $y -eq $food_y ]] && cell="\033[38;5;196m@\033[0m"
+                
+                for ((i=1; i<=${#body_x[@]}; i++)); do
+                    if [[ ${body_x[$i]} -eq $x && ${body_y[$i]} -eq $y ]]; then
+                        [[ $i -eq 1 ]] && cell="\033[38;5;46mO\033[0m" || cell="\033[38;5;34mo\033[0m"
+                        break
+                    fi
+                done
+                
+                echo -ne "$cell"
+            done
+            echo "|"
+        done
+        
+        printf "  +"
+        printf -- "-%.0s" $(seq 1 $width)
+        echo "+"
+        
+        read -t 0.12 -s -n 1 key 2>/dev/null || true
+        case "$key" in
+            w|W) [[ $dir != "down" ]] && dir="up" ;;
+            s|S) [[ $dir != "up" ]] && dir="down" ;;
+            a|A) [[ $dir != "right" ]] && dir="left" ;;
+            d|D) [[ $dir != "left" ]] && dir="right" ;;
+            q|Q) game_over=1; continue ;;
+        esac
+        
+        case "$dir" in
+            up) ((head_y--)) ;;
+            down) ((head_y++)) ;;
+            left) ((head_x--)) ;;
+            right) ((head_x++)) ;;
+        esac
+        
+        ((head_x < 1 || head_x > width || head_y < 1 || head_y > height)) && game_over=1
+        
+        for ((i=2; i<=${#body_x[@]}; i++)); do
+            [[ ${body_x[$i]} -eq $head_x && ${body_y[$i]} -eq $head_y ]] && game_over=1
+        done
+        
+        if [[ $head_x -eq $food_x && $head_y -eq $food_y ]]; then
+            ((score++))
+            food_x=$((RANDOM % (width-2) + 2))
+            food_y=$((RANDOM % (height-2) + 2))
+            body_x=($head_x "${body_x[@]}")
+            body_y=($head_y "${body_y[@]}")
+        else
+            body_x=($head_x "${body_x[@]:0:${#body_x[@]}-1}")
+            body_y=($head_y "${body_y[@]:0:${#body_y[@]}-1}")
+        fi
+    done
+    
+    stty echo 2>/dev/null
+    tput cnorm
+    echo ""
+    echo -e "  \033[38;5;196m💀 Game Over!\033[0m Final Score: $score"
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────
+# 🎆 Fixed Fireworks
+# ─────────────────────────────────────────────────────────────────
+
+fireworks() {
+    local duration=${1:-5}
+    local width=$(tput cols)
+    local height=$(tput lines)
+    local end=$((SECONDS + duration))
+    local -a colors=(196 208 226 46 51 93 201 213 202 226)
+    
+    tput civis
+    trap 'tput cnorm; clear; return' INT
+    clear
+    
+    while ((SECONDS < end)); do
+        local cx=$((RANDOM % (width - 20) + 10))
+        local cy=$((RANDOM % (height - 10) + 3))
+        local color=${colors[$((RANDOM % 10 + 1))]}
+        
+        # Rocket trail going up
+        for ((ry=height-2; ry>cy; ry-=2)); do
+            tput cup $ry $cx
+            echo -ne "\033[38;5;226m|\033[0m"
+            sleep 0.015
+            tput cup $ry $cx
+            echo -n " "
+        done
+        
+        # Explosion - expand outward
+        for r in 1 2 3 4 5; do
+            # 8 directions
+            for dir in "0,1" "1,1" "1,0" "1,-1" "0,-1" "-1,-1" "-1,0" "-1,1"; do
+                local dx=${dir%,*}
+                local dy=${dir#*,}
+                local px=$((cx + dx * r))
+                local py=$((cy + dy * r))
+                
+                if ((px > 0 && px < width-1 && py > 1 && py < height-1)); then
+                    tput cup $py $px
+                    echo -ne "\033[38;5;${color}m*\033[0m"
+                fi
+            done
+            sleep 0.03
+        done
+        
+        sleep 0.1
+        
+        # Clear explosion
+        for r in 1 2 3 4 5; do
+            for dir in "0,1" "1,1" "1,0" "1,-1" "0,-1" "-1,-1" "-1,0" "-1,1"; do
+                local dx=${dir%,*}
+                local dy=${dir#*,}
+                local px=$((cx + dx * r))
+                local py=$((cy + dy * r))
+                
+                if ((px > 0 && px < width-1 && py > 1 && py < height-1)); then
+                    tput cup $py $px
+                    echo -n " "
+                fi
+            done
+        done
+    done
+    
+    tput cnorm
+    clear
+    echo -e "  \033[38;5;226m🎆 Happy celebrations! 🎆\033[0m"
 }
