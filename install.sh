@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║                                                                            ║
 # ║   ████████╗███████╗██████╗ ███╗   ███╗██╗███╗   ██╗██╗   ██╗██████╗        ║
@@ -40,7 +40,7 @@ DETECTED_LANG=$(detect_language)
 INSTALL_LANG="en"
 
 # Translation function
-declare -A T
+typeset -gA T
 
 load_translations() {
     local lang="$1"
