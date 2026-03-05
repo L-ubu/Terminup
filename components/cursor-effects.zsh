@@ -106,51 +106,6 @@ ding() {
     flash        # Visual flash
 }
 
-# Clear with style
-cls() {
-    local style="${1:-fade}"
-    
-    case "$style" in
-        fade)
-            for i in {1..5}; do
-                printf '\e[2J\e[H'
-                sleep 0.02
-            done
-            ;;
-        scroll)
-            local lines=$(tput lines)
-            for ((i=0; i<lines; i++)); do
-                echo ""
-                sleep 0.01
-            done
-            clear
-            ;;
-        instant|*)
-            clear
-            ;;
-    esac
-}
-
-# Welcome message with typing effect
-welcome() {
-    local messages=(
-        "👋 Welcome back!"
-        "🚀 Ready to code?"
-        "💻 Let's build something awesome!"
-        "✨ Time to create magic!"
-        "🔥 Let's get productive!"
-    )
-    local msg="${messages[$((RANDOM % ${#messages[@]} + 1))]}"
-    
-    echo ""
-    echo -n "  "
-    for ((i=0; i<${#msg}; i++)); do
-        echo -n "${msg:$i:1}"
-        sleep 0.03
-    done
-    echo ""
-    echo ""
-}
 
 # ─────────────────────────────────────────────────────────────────
 # Syntax highlighting improvements
