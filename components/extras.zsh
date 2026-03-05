@@ -1657,13 +1657,16 @@ blackjack() {
     local -a player_cards dealer_cards
     local player_total=0 dealer_total=0
     local _last_card=0
+    local _card_counter=0
     
-    # Seed random with something unique
-    RANDOM=$((RANDOM ^ $$))
-    
-    # Deal a card and store in _last_card (avoids subshell RANDOM issue)
+    # Deal a card using /dev/urandom for true randomness
     _deal_card() {
-        _last_card=$((RANDOM % 13 + 1))
+        ((_card_counter++))
+        if [[ -r /dev/urandom ]]; then
+            _last_card=$(( $(od -An -tu2 -N2 /dev/urandom | tr -d ' ') % 13 + 1 ))
+        else
+            _last_card=$(( (RANDOM + _card_counter * 7) % 13 + 1 ))
+        fi
     }
     
     # Get card display name
