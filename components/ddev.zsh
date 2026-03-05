@@ -18,8 +18,8 @@ is_ddev_project() {
 # DDEV status indicator
 ddev_status() {
     if is_ddev_project; then
-        local status=$(ddev describe -j 2>/dev/null | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
-        case "$status" in
+        local ddev_state=$(ddev describe -j 2>/dev/null | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+        case "$ddev_state" in
             running)
                 echo -e "\033[38;5;46m●\033[0m DDEV running"
                 ;;
