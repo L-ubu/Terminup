@@ -31,16 +31,14 @@ TERMINUP_LANGUAGES=(
 # Load Language Files
 # ─────────────────────────────────────────────────────────────────
 
-# Get the directory where this script is located
-_I18N_DIR="${0:A:h}"
+# Language files directory
+_I18N_DIR="${TERMINUP_DIR}/components"
 
-# Source all language files
+# Only load English (fallback) + the active language
 source "$_I18N_DIR/languages/en.zsh"
-source "$_I18N_DIR/languages/nl.zsh"
-source "$_I18N_DIR/languages/fr.zsh"
-source "$_I18N_DIR/languages/de.zsh"
-source "$_I18N_DIR/languages/es.zsh"
-source "$_I18N_DIR/languages/it.zsh"
+if [[ "$TERMINUP_LANG" != "en" && -f "$_I18N_DIR/languages/${TERMINUP_LANG}.zsh" ]]; then
+    source "$_I18N_DIR/languages/${TERMINUP_LANG}.zsh"
+fi
 
 # ─────────────────────────────────────────────────────────────────
 # Translation Function
@@ -115,12 +113,12 @@ lang_set() {
     echo "TERMINUP_LANG=\"$new_lang\"" > "$TERMINUP_CONFIG"
     export TERMINUP_LANG="$new_lang"
     
-    echo -e "  \033[38;5;46m✓\033[0m Language changed to ${TERMINUP_LANGUAGES[$new_lang]}"
-    echo -e "  \033[38;5;245mReloading shell...\033[0m"
-    sleep 0.3
+    # Load the new language file
+    if [[ "$new_lang" != "en" && -f "$_I18N_DIR/languages/${new_lang}.zsh" ]]; then
+        source "$_I18N_DIR/languages/${new_lang}.zsh"
+    fi
     
-    # Reload shell automatically
-    exec zsh
+    echo -e "  \033[38;5;46m✓\033[0m Language changed to ${TERMINUP_LANGUAGES[$new_lang]}"
 }
 
 # Main language command
