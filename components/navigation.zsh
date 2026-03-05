@@ -80,18 +80,8 @@ cd() {
         return 1
     fi
     
-    # Quick animation
-    local arrows=("→" "→→" "→→→" "📂")
-    for arrow in "${arrows[@]}"; do
-        printf "\r  \033[38;5;51m%s\033[0m" "$arrow"
-        sleep 0.05
-    done
-    
     # Actually change directory
     builtin cd "$target" || return 1
-    
-    # Clear the animation and show new location
-    printf "\r\033[K"
     
     # Show compact directory info
     local dir_name="${PWD##*/}"
@@ -100,12 +90,10 @@ cd() {
     
     echo -e "  📂 \033[38;5;39m${parent_path}/\033[1;38;5;51m${dir_name}\033[0m"
     
-    # Quick file count
-    local file_count=$(find . -maxdepth 1 ! -name '.' | wc -l | tr -d ' ')
-    local dir_count=$(find . -maxdepth 1 -type d ! -name '.' | wc -l | tr -d ' ')
-    
-    echo -e "     \033[38;5;245m$dir_count dirs, $((file_count - dir_count)) files\033[0m"
-    echo ""
+    # Fast file count using zsh globs instead of find
+    local dirs=(./*(/N))
+    local files=(./*(.N))
+    echo -e "     \033[38;5;245m${#dirs} dirs, ${#files} files\033[0m"
 }
 
 # Enhanced ls with icons and colors
@@ -183,7 +171,7 @@ lt() {
     
     # Use find to create tree-like output
     find "$target" -maxdepth "$depth" -print 2>/dev/null | while read -r path; do
-        local level=$(echo "$path" | tr -cd '/' | wc -c)
+        local level=${#path//[^\/]}
         local indent=""
         for ((i=0; i<level; i++)); do
             indent+="  "
@@ -246,9 +234,7 @@ recent() {
     echo ""
     
     local i=1
-    dirs -v | while read -r line; do
-        local num="${line%% *}"
-        local path="${line#* }"
+    dirs -v | while read -r num path; do
         
         if [[ "$num" == "0" ]]; then
             echo -e "    \033[38;5;46m▶\033[0m \033[1m$path\033[0m (current)"
