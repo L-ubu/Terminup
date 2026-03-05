@@ -46,16 +46,17 @@ TERMINUP_COMPONENTS_CONFIG="$TERMINUP_CONFIG_DIR/components"
 # ─────────────────────────────────────────────────────────────────
 _terminup_lazy_load() {
     local component="$1"
-    local trigger_functions=("${@:2}")
+    shift
+    local all_funcs="$*"
     
-    for func in "${trigger_functions[@]}"; do
-        eval "
-        $func() {
-            unfunction $func 2>/dev/null
+    for func in ${=all_funcs}; do
+        unalias "$func" 2>/dev/null
+        eval "function $func {
+            unalias $all_funcs 2>/dev/null
+            unfunction $all_funcs 2>/dev/null
             source \"\$TERMINUP_DIR/components/${component}.zsh\"
             $func \"\$@\"
-        }
-        "
+        }"
     done
 }
 
@@ -68,20 +69,24 @@ _terminup_load_component() {
     local component="$1"
     
     case "$component" in
+        aliases)
+            # Load aliases immediately (not lazy-loaded) for fast access
+            source "$TERMINUP_DIR/components/aliases.zsh"
+            ;;
         git)
             _terminup_lazy_load "git-magic" gc gp gl ga gco gss gb gst gstp gm fga
             ;;
         nav)
-            _terminup_lazy_load "navigation" ll l lt fcd mkcd recent bm jb
+            _terminup_lazy_load "navigation" ll l lt fcd mkcd recent
             ;;
         npm)
-            _terminup_lazy_load "npm-pnpm" ni pi dev build test scripts fscript add add-dev remove outdated
+            _terminup_lazy_load "npm-pnpm" ni pi dev build test scripts add add-dev remove outdated
             ;;
         ddev)
-            _terminup_lazy_load "ddev" dni dpi ddev-dev ddev-build dstart dstop drestart dssh dlogs dinfo dcomposer dartisan dmysql fddev dlist is_ddev_project ddev_status
+            _terminup_lazy_load "ddev" dni dpi ddev-dev ddev-build ddev-scripts dstart dstop drestart dssh dlogs dinfo dcomposer dartisan dmysql fddev dlist is_ddev_project ddev_status
             ;;
         fzf)
-            _terminup_lazy_load "fzf-power" ff fbr flog fkill fdocker
+            _terminup_lazy_load "fzf-power" ff fbr flog fkill fdocker fscript bm jb rbm
             # Set up Ctrl+R immediately with lazy-loading widget
             if command -v fzf &>/dev/null; then
                 _terminup_fzf_history() {
@@ -94,7 +99,7 @@ _terminup_load_component() {
             fi
             ;;
         animations)
-            _terminup_lazy_load "animations" animate_text spinner progress_bar
+            _terminup_lazy_load "animations" type_text spin progress_bar animated_progress celebrate shake_error wave_text loading_dots matrix_rain
             ;;
         themes)
             _terminup_lazy_load "themes" theme colors
@@ -103,17 +108,17 @@ _terminup_load_component() {
             _terminup_lazy_load "extras" pomo focus todo note remind stopwatch stats genpass weather quote spotify cleanup decide snake asciiart slots achievement api nyan fireworks clockwidget cmdstats shorten hn dadjoke cls clsq google github typetest ritual eod standup welcome blackjack countdown banner cal stackoverflow share qr pushnotify context whatshere blame ports projectstats logs gundo jpp
             ;;
         screensaver)
-            _terminup_lazy_load "screensaver" lock aclock alock matrix pipes syslock autolock rain fire aquarium stars bounce
+            _terminup_lazy_load "screensaver" screensaver lock aclock alock matrix pipes syslock autolock lockall noautolock rain fire aquarium stars bounce
             ;;
         startup)
             # Source startup.zsh immediately (not lazy-loaded) so boot works right away
             source "$TERMINUP_DIR/components/startup.zsh"
             ;;
         cursor)
-            _terminup_lazy_load "cursor-effects" cursor_effect
+            _terminup_lazy_load "cursor-effects" set_cursor set_cursor_color set_cursor_blink_rate flash ding
             ;;
         completions)
-            _terminup_lazy_load "completions" _terminup_completions
+            source "$TERMINUP_DIR/components/completions.zsh"
             ;;
     esac
 }
@@ -125,9 +130,9 @@ _terminup_load_component() {
 # Define which components each mode includes
 typeset -gA TERMINUP_MODE_COMPONENTS
 TERMINUP_MODE_COMPONENTS=(
-    minimal "git nav npm ddev"
-    fun "git nav npm ddev animations themes extras screensaver startup"
-    full "git nav npm ddev fzf animations themes extras screensaver startup cursor completions"
+    minimal "aliases git nav npm ddev"
+    fun "aliases git nav npm ddev animations themes extras screensaver startup"
+    full "aliases git nav npm ddev fzf animations themes extras screensaver startup cursor completions"
 )
 
 # Load components based on mode
@@ -152,10 +157,7 @@ _terminup_init_mode() {
 # Initialize based on current mode
 _terminup_init_mode "$TERMINUP_MODE"
 
-# Print welcome message on first load
-if [[ -z "$TERMINUP_LOADED" ]]; then
-    export TERMINUP_LOADED=1
-fi
+export TERMINUP_LOADED=1
 
 # ─────────────────────────────────────────────────────────────────
 # Mode Management Commands
@@ -219,6 +221,7 @@ terminup_mode() {
             echo ""
             echo -e "  \033[38;5;51mAvailable components:\033[0m"
             echo ""
+            echo -e "    \033[38;5;46maliases\033[0m     - General aliases (g, gs, dup, ddu...)"
             echo -e "    \033[38;5;46mgit\033[0m         - Git commands (gc, gp, gl, gss...)"
             echo -e "    \033[38;5;46mnav\033[0m         - Navigation (ll, lt, fcd, mkcd...)"
             echo -e "    \033[38;5;46mnpm\033[0m         - NPM/PNPM (ni, pi, dev, build...)"
@@ -275,6 +278,53 @@ _tup_header() {
     echo ""
 }
 
+_tup_aliases() {
+    echo -e "  \033[1;38;5;226m🔗 ALIASES\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;46mg\033[0m            git"
+    echo -e "    \033[38;5;46mgpu\033[0m          git push -u (with upstream)"
+    echo -e "    \033[38;5;46mgac\033[0m <msg>    git add . && git commit"
+    echo -e "    \033[38;5;46mgbase\033[0m        Get base branch from origin"
+    echo -e "    \033[38;5;46mgch\033[0m          git checkout"
+    echo -e "    \033[38;5;240m  Note: gc/gp/gs are in git-magic with animations\033[0m"
+    echo ""
+    echo -e "  \033[1;38;5;39m🐳 Docker\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;39mi\033[0m            ./install.sh"
+    echo -e "    \033[38;5;39mdup\033[0m          ./docker.sh up"
+    echo -e "    \033[38;5;39mddown\033[0m        ./docker.sh down"
+    echo -e "    \033[38;5;39mdnode\033[0m        ./docker.sh bash node"
+    echo -e "    \033[38;5;39mdphp\033[0m         ./docker.sh bash php"
+    echo -e "    \033[38;5;39mdms\033[0m          ./docker.sh bash mysql"
+    echo ""
+    echo -e "  \033[1;38;5;208m🔧 DDEV\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;208mddu\033[0m          ddev start"
+    echo -e "    \033[38;5;208mddd\033[0m          ddev stop"
+    echo -e "    \033[38;5;208mddr\033[0m          ddev restart"
+    echo -e "    \033[38;5;208mddi\033[0m          ddev install"
+    echo -e "    \033[38;5;208mddinit\033[0m       ddev init"
+    echo -e "    \033[38;5;208mdds\033[0m          ddev ssh"
+    echo -e "    \033[38;5;208mdjs\033[0m          ddev exec yarn dev"
+    echo -e "    \033[38;5;208mdjsns\033[0m        ddev exec yarn dev:ns"
+    echo ""
+    echo -e "  \033[1;38;5;141m💧 Drupal\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;141mdrupal:install\033[0m  Full Drupal install (composer + drush)"
+    echo -e "    \033[38;5;141mdrupal:i\033[0m        Alias for drupal:install"
+    echo ""
+    echo -e "  \033[1;38;5;213m🐙 Docker Compose\033[0m"
+    echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+    echo -e "    \033[38;5;213mdtest\033[0m        yarn test:local in node"
+    echo -e "    \033[38;5;213mdtestu\033[0m       yarn test:local -u in node"
+    echo -e "    \033[38;5;213mdnal\033[0m         yarn watch:all in node"
+    echo -e "    \033[38;5;213mdjal\033[0m         yarn watch:js:all:ns in node"
+    echo -e "    \033[38;5;213mcc\033[0m           symfony cache:clear"
+    echo ""
+    echo -e "  \033[38;5;240m📁 Personal aliases: ~/.config/terminup/user-aliases.zsh\033[0m"
+    echo ""
+}
+
 _tup_git() {
     echo -e "  \033[1;38;5;226m🔮 GIT COMMANDS\033[0m"
     echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
@@ -303,7 +353,6 @@ _tup_nav() {
     echo -e "    \033[38;5;39mmkcd\033[0m <dir>   Create and enter directory"
     echo -e "    \033[38;5;39mrecent\033[0m       Recent directories"
     echo -e "    \033[38;5;39m..\033[0m \033[38;5;39m...\033[0m \033[38;5;39m....\033[0m  Quick parent navigation"
-    echo -e "    \033[38;5;214mbm\033[0m / \033[38;5;214mjb\033[0m     Bookmark / Jump to bookmark"
     echo ""
 }
 
@@ -315,7 +364,6 @@ _tup_npm() {
     echo -e "    \033[38;5;208mbuild\033[0m        Production build"
     echo -e "    \033[38;5;208mtest\033[0m         Run tests"
     echo -e "    \033[38;5;208mscripts\033[0m      List npm scripts"
-    echo -e "    \033[38;5;208mfscript\033[0m      Fuzzy pick script"
     echo -e "    \033[38;5;208madd\033[0m/\033[38;5;208madd-dev\033[0m  Add dependency"
     echo -e "    \033[38;5;208mremove\033[0m       Remove dependency"
     echo -e "    \033[38;5;208moutdated\033[0m     Check outdated packages"
@@ -331,6 +379,10 @@ _tup_fzf() {
     echo -e "    \033[38;5;177mflog\033[0m         Git log browser"
     echo -e "    \033[38;5;177mfkill\033[0m        Process killer"
     echo -e "    \033[38;5;177mfdocker\033[0m      Docker container selector"
+    echo -e "    \033[38;5;177mbm\033[0m           Bookmark current directory"
+    echo -e "    \033[38;5;177mjb\033[0m           Jump to bookmark (fuzzy)"
+    echo -e "    \033[38;5;177mrbm\033[0m          Remove bookmark"
+    echo -e "    \033[38;5;177mfscript\033[0m      Fuzzy npm script picker"
     echo ""
 }
 
@@ -403,14 +455,21 @@ _tup_workflow() {
 }
 
 _tup_fun() {
-    echo -e "  \033[1;38;5;226m🎮 FUN\033[0m"
+    echo -e "  \033[1;38;5;226m🎮 GAMES & FUN\033[0m"
     echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
-    echo -e "    \033[38;5;39mrain\033[0m         Peaceful rain"
-    echo -e "    \033[38;5;39mfire\033[0m         Animated fire"
-    echo -e "    \033[38;5;39maquarium\033[0m     ASCII fish tank"
-    echo -e "    \033[38;5;39mstars\033[0m        Starfield"
-    echo -e "    \033[38;5;39mbounce\033[0m       DVD bounce"
-    echo -e "    \033[38;5;39mdecide\033[0m a b c Random decision"
+    echo -e "    \033[38;5;39mblackjack\033[0m    $(_t desc_blackjack "Play Blackjack")"
+    echo -e "    \033[38;5;39mslots\033[0m        $(_t desc_slots "Slot machine")"
+    echo -e "    \033[38;5;39msnake\033[0m        $(_t desc_snake "Snake game")"
+    echo -e "    \033[38;5;39mnyan\033[0m         $(_t desc_nyan "Nyan cat animation")"
+    echo -e "    \033[38;5;39mfireworks\033[0m    $(_t desc_fireworks "Fireworks display")"
+    echo -e "    \033[38;5;39mdadjoke\033[0m      $(_t desc_dadjoke "Random dad joke")"
+    echo -e "    \033[38;5;39masciiart\033[0m <t> $(_t desc_asciiart "ASCII art text")"
+    echo -e "    \033[38;5;39mdecide\033[0m a b c $(_t desc_decide "Random decision")"
+    echo -e "    \033[38;5;39mrain\033[0m         $(_t desc_rain "Peaceful rain")"
+    echo -e "    \033[38;5;39mfire\033[0m         $(_t desc_fire "Animated fire")"
+    echo -e "    \033[38;5;39maquarium\033[0m     $(_t desc_aquarium "ASCII fish tank")"
+    echo -e "    \033[38;5;39mstars\033[0m        $(_t desc_stars "Starfield")"
+    echo -e "    \033[38;5;39mbounce\033[0m       $(_t desc_bounce "DVD bounce")"
     echo ""
 }
 
@@ -461,12 +520,16 @@ terminup() {
             echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
             echo -e "  \033[1;38;5;51mCATEGORIES:\033[0m  \033[38;5;240mtup <category> for details\033[0m"
             echo ""
-            echo -e "    \033[38;5;46mgit\033[0m     \033[38;5;39mnav\033[0m     \033[38;5;208mnpm\033[0m     \033[38;5;177mfzf\033[0m     \033[38;5;39mddev\033[0m"
-            echo -e "    \033[38;5;213mtheme\033[0m   \033[38;5;141mextras\033[0m  \033[38;5;208mtools\033[0m   \033[38;5;226mworkflow\033[0m"
+            echo -e "    \033[38;5;46maliases\033[0m \033[38;5;46mgit\033[0m     \033[38;5;39mnav\033[0m     \033[38;5;208mnpm\033[0m     \033[38;5;177mfzf\033[0m"
+            echo -e "    \033[38;5;39mddev\033[0m    \033[38;5;213mtheme\033[0m   \033[38;5;141mextras\033[0m  \033[38;5;208mtools\033[0m   \033[38;5;226mworkflow\033[0m"
             echo -e "    \033[38;5;87mscreen\033[0m  \033[38;5;39mfun\033[0m     \033[38;5;39msystem\033[0m  \033[38;5;255mall\033[0m"
             echo ""
             echo -e "  \033[38;5;240mReload: \033[38;5;51mtups\033[38;5;240m  │  Version: \033[38;5;51mtup version\033[0m"
             echo ""
+            ;;
+        aliases|alias)
+            _tup_header
+            _tup_aliases
             ;;
         git)
             _tup_header
@@ -518,6 +581,7 @@ terminup() {
             ;;
         all|full)
             _tup_header
+            _tup_aliases
             _tup_git
             _tup_nav
             _tup_npm
@@ -531,6 +595,27 @@ terminup() {
             _tup_screen
             _tup_system
             ;;
+        search|find|s)
+            local query="$2"
+            if [[ -z "$query" ]]; then
+                echo -e "  \033[38;5;196m✗\033[0m Usage: tup search <keyword>"
+                return 1
+            fi
+            _tup_header
+            echo -e "  \033[1;38;5;226m🔍 Search results for: \033[38;5;51m${query}\033[0m"
+            echo -e "  \033[38;5;245m─────────────────────────────────────────────\033[0m"
+            local found=0
+            while IFS= read -r line; do
+                if [[ "$line" == *"$query"* ]] || [[ "${line:l}" == *"${query:l}"* ]]; then
+                    echo "$line"
+                    ((found++))
+                fi
+            done < <(terminup all 2>/dev/null)
+            if [[ $found -eq 0 ]]; then
+                echo -e "    \033[38;5;245mNo commands matching '$query'\033[0m"
+            fi
+            echo ""
+            ;;
         version|--version|-v)
             echo -e "  \033[38;5;51mTerminup\033[0m v1.0.0"
             ;;
@@ -539,7 +624,7 @@ terminup() {
             echo -e "  \033[38;5;46m✓\033[0m Terminup reloaded!"
             ;;
         mode)
-            shift 2>/dev/null
+            shift
             terminup_mode "$@"
             ;;
         install|reinstall|setup)
@@ -552,7 +637,7 @@ terminup() {
             ;;
         *)
             echo -e "  \033[38;5;196m✗\033[0m Unknown: $cmd"
-            echo -e "  \033[38;5;245mTry: tup [git|nav|npm|extras|tools|workflow|fun|screen|mode|install|all]\033[0m"
+            echo -e "  \033[38;5;245mTry: tup [git|nav|npm|extras|tools|workflow|fun|screen|search|mode|install|all]\033[0m"
             ;;
     esac
 }
