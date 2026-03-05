@@ -49,6 +49,7 @@ animated_progress() {
     local label="${2:-Loading}"
     local color="${3:-51}"
     local steps=50
+    local sleep_delay=$(awk "BEGIN {printf \"%.3f\", $duration/$steps}")
     
     echo ""
     for ((i=0; i<=steps; i++)); do
@@ -61,7 +62,7 @@ animated_progress() {
         for ((j=0; j<empty; j++)); do bar+="░"; done
         
         printf "\r  \033[38;5;${color}m${label}\033[0m ▐\033[38;5;${color}m%s\033[0m▌ %3d%%" "$bar" "$percent"
-        sleep $(echo "scale=3; $duration / $steps" | bc)
+        sleep $sleep_delay
     done
     echo ""
 }
@@ -127,7 +128,8 @@ matrix_rain() {
         local col=$((RANDOM % cols))
         local char="${chars:$((RANDOM % ${#chars})):1}"
         local color=$((22 + RANDOM % 10))
-        printf "\033[38;5;${color}m\033[${RANDOM % 10};${col}H${char}"
+        local row=$((RANDOM % 10 + 1))
+        printf "\033[38;5;${color}m\033[${row};${col}H${char}"
         sleep 0.01
     done
     clear
