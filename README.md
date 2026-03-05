@@ -340,10 +340,14 @@ Use `tup` to see all commands, or `tup <category>` for specific categories.
 
 | Command | Description |
 |---------|-------------|
+| `blackjack` | 🃏 **Play Blackjack** (Hit/Stand/Quit) |
 | `snake` | 🐍 Terminal snake game |
-| `slots` | 🎰 Slot machine |
+| `slots` | 🎰 Slot machine with jackpot animation |
 | `nyan [secs]` | 🌈 Nyan cat animation |
 | `fireworks [secs]` | 🎆 Fireworks animation |
+| `dadjoke` | 😄 Random dad joke |
+| `asciiart <text>` | 🎨 Generate ASCII art |
+| `decide a b c` | 🎲 Random decision maker |
 | `rain` | 🌧️ Rain animation |
 | `fire` | 🔥 Fire animation |
 | `aquarium` | 🐠 ASCII fish tank |
