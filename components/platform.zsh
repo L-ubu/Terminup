@@ -227,23 +227,6 @@ _pkg_install() {
 }
 
 # ─────────────────────────────────────────────────────────────────
-# Platform-specific Fixes
-# ─────────────────────────────────────────────────────────────────
-
-# Fix for Windows/WSL path handling
-if [[ "$TERMINUP_OS" == "wsl" ]]; then
-    # Convert Windows paths to WSL paths
-    _winpath() {
-        wslpath "$1" 2>/dev/null || echo "$1"
-    }
-fi
-
-# Linux-specific: Check if running in a graphical environment
-_has_display() {
-    [[ -n "$DISPLAY" ]] || [[ -n "$WAYLAND_DISPLAY" ]] || [[ "$TERMINUP_OS" == "macos" ]]
-}
-
-# ─────────────────────────────────────────────────────────────────
 # Platform Info
 # ─────────────────────────────────────────────────────────────────
 
