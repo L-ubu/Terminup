@@ -85,7 +85,8 @@ gc() {
     # Animated commit
     local frames=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
     
-    git commit -m "$message" &>/dev/null &
+    local _git_err=$(mktemp)
+    git commit -m "$message" >"$_git_err" 2>&1 &
     local pid=$!
     local i=0
     
@@ -105,7 +106,9 @@ gc() {
         echo ""
     else
         echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_commit) $(_t error)\033[K"
+        echo -e "  \033[38;5;245m$(cat "$_git_err")\033[0m"
     fi
+    rm -f "$_git_err"
     
     return $exit_code
 }
@@ -124,7 +127,8 @@ gp() {
     # Animated push with rocket
     local rockets=("🚀      " " 🚀     " "  🚀    " "   🚀   " "    🚀  " "     🚀 " "      🚀" "     ☁️ ")
     
-    git push $remote $branch 2>&1 &
+    local _git_err=$(mktemp)
+    git push $remote $branch >"$_git_err" 2>&1 &
     local pid=$!
     local i=0
     
@@ -141,7 +145,6 @@ gp() {
         echo -e "\r  \033[38;5;46m✓\033[0m $(_t success)! ☁️✨\033[K"
         echo ""
         
-        # Show celebration
         local emojis=("🎉" "🚀" "✨" "🌟")
         for i in {1..2}; do
             for emoji in "${emojis[@]}"; do
@@ -152,7 +155,9 @@ gp() {
         printf "\r  🎉 $(_t done)! 🎉\033[K\n"
     else
         echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_push) $(_t error)\033[K"
+        echo -e "  \033[38;5;245m$(cat "$_git_err")\033[0m"
     fi
+    rm -f "$_git_err"
     echo ""
     
     return $exit_code
@@ -172,7 +177,8 @@ gl() {
     # Animated pull with download effect
     local download=("📥      " " 📥     " "  📥    " "   📥   " "    📥  " "     📥 " "      📥" "      📦")
     
-    git pull $remote $branch 2>&1 &
+    local _git_err=$(mktemp)
+    git pull $remote $branch >"$_git_err" 2>&1 &
     local pid=$!
     local i=0
     
@@ -189,7 +195,9 @@ gl() {
         echo -e "\r  \033[38;5;46m✓\033[0m $(_t success)! 📦✨\033[K"
     else
         echo -e "\r  \033[38;5;196m✗\033[0m $(_t git_pull) $(_t error)\033[K"
+        echo -e "  \033[38;5;245m$(cat "$_git_err")\033[0m"
     fi
+    rm -f "$_git_err"
     echo ""
     
     return $exit_code
@@ -201,7 +209,7 @@ ga() {
     
     echo -e "\n  \033[38;5;208m📂 $(_t git_add)...\033[0m"
     
-    git add $files &>/dev/null &
+    git add "${=files}" &>/dev/null &
     local pid=$!
     local frames=("▱▱▱▱▱▱▱" "▰▱▱▱▱▱▱" "▰▰▱▱▱▱▱" "▰▰▰▱▱▱▱" "▰▰▰▰▱▱▱" "▰▰▰▰▰▱▱" "▰▰▰▰▰▰▱" "▰▰▰▰▰▰▰")
     local i=0
