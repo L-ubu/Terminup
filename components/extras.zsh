@@ -4,6 +4,43 @@
 # ╰──────────────────────────────────────────────────────────────╯
 
 # ─────────────────────────────────────────────────────────────────
+# 🔧 Shared Helpers
+# ─────────────────────────────────────────────────────────────────
+
+_url_encode() {
+    python3 -c "import urllib.parse; print(urllib.parse.quote('$1', safe=''))" 2>/dev/null || echo "$1"
+}
+
+_ok()  { echo -e "  \033[38;5;46m✓\033[0m $*" }
+_err() { echo -e "  \033[38;5;196m✗\033[0m $*" }
+
+_box() {
+    local color="$1" title="$2"
+    echo ""
+    echo -e "  \033[38;5;${color}m╭───────────────────────────────────────╮\033[0m"
+    echo -e "  \033[38;5;${color}m│\033[0m       \033[1m${title}\033[0m          \033[38;5;${color}m│\033[0m"
+    echo -e "  \033[38;5;${color}m╰───────────────────────────────────────╯\033[0m"
+    echo ""
+}
+
+_web_search() {
+    local base_url="$1" label="$2"
+    shift 2
+    local query="${*// /+}"
+    _open "${base_url}${query}"
+    _ok "$label: $*"
+}
+
+_sed_inplace() {
+    local expr="$1" file="$2"
+    if [[ "$OSTYPE" == darwin* ]]; then
+        sed -i '' "$expr" "$file"
+    else
+        sed -i "$expr" "$file"
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────────
 # 🍅 Pomodoro Timer
 # ─────────────────────────────────────────────────────────────────
 
@@ -105,7 +142,7 @@ note() {
         pop)
             if [[ -f "$NOTES_FILE" && -s "$NOTES_FILE" ]]; then
                 local last=$(tail -1 "$NOTES_FILE")
-                sed -i '' '$d' "$NOTES_FILE" 2>/dev/null || sed '$d' "$NOTES_FILE" > "$NOTES_FILE.tmp" && mv "$NOTES_FILE.tmp" "$NOTES_FILE"
+                _sed_inplace '$d' "$NOTES_FILE"
                 echo -e "  \033[38;5;196m✓\033[0m $(_t removed "Removed"): ${last#* | }"
             fi
             ;;
@@ -282,7 +319,7 @@ genpass() {
     echo ""
     
     # Cross-platform copy to clipboard
-    _copy "$password"
+    echo -n "$password" | _copy
     echo -e "  \033[38;5;245m($(_t copied_clipboard "Copied to clipboard"))\033[0m"
     echo ""
 }
@@ -422,25 +459,13 @@ cleanup() {
 # 🔍 Quick Web Search (Cross-platform)
 # ─────────────────────────────────────────────────────────────────
 
-google() {
-    local query="${*// /+}"
-    _open "https://www.google.com/search?q=$query"
-    echo -e "  \033[38;5;46m✓\033[0m $(_t searching "Searching for"): $*"
-}
-
-stackoverflow() {
-    local query="${*// /+}"
-    _open "https://stackoverflow.com/search?q=$query"
-    echo -e "  \033[38;5;46m✓\033[0m $(_t searching_so "Searching Stack Overflow for"): $*"
-}
-
+google()        { _web_search "https://www.google.com/search?q=" "$(_t searching "Searching for")" "$@" }
+stackoverflow() { _web_search "https://stackoverflow.com/search?q=" "$(_t searching_so "Searching Stack Overflow for")" "$@" }
 github() {
-    local query="${*// /+}"
-    if [[ -z "$query" ]]; then
+    if [[ -z "$1" ]]; then
         _open "https://github.com"
     else
-        _open "https://github.com/search?q=$query"
-        echo -e "  \033[38;5;46m✓\033[0m $(_t searching_gh "Searching GitHub for"): $*"
+        _web_search "https://github.com/search?q=" "$(_t searching_gh "Searching GitHub for")" "$@"
     fi
 }
 
@@ -512,7 +537,7 @@ share() {
         echo ""
         echo -e "  \033[38;5;226mURL:\033[0m $url"
         echo ""
-        _copy "$url" 2>/dev/null
+        echo -n "$url" | _copy 2>/dev/null
         echo -e "  \033[38;5;245m(Copied to clipboard)\033[0m"
     else
         echo -e "  \033[38;5;196m✗\033[0m Upload failed"
@@ -544,7 +569,7 @@ qr() {
         qrencode -t ANSI256 -o - "$text"
     else
         # Fallback to online API
-        curl -s "https://qrenco.de/$text" 2>/dev/null || echo "  Install qrencode for offline QR codes: brew install qrencode"
+        curl -s "https://qrenco.de/$(_url_encode "$text")" 2>/dev/null || echo "  Install qrencode for offline QR codes: brew install qrencode"
     fi
     echo ""
 }
@@ -591,10 +616,10 @@ context() {
     # Git info
     if [[ -d ".git" ]]; then
         local branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-        local status=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+        local change_count=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
         local last_commit=$(git log -1 --format="%s" 2>/dev/null)
         echo -e "  \033[38;5;226m🌿 Branch:\033[0m $branch"
-        echo -e "  \033[38;5;226m📝 Changes:\033[0m $status files"
+        echo -e "  \033[38;5;226m📝 Changes:\033[0m $change_count files"
         echo -e "  \033[38;5;226m💬 Last:\033[0m ${last_commit:0:40}..."
     fi
     
@@ -1108,14 +1133,14 @@ todo() {
         done|d)
             local num="${2:-1}"
             if [[ -f "$TODO_FILE" ]]; then
-                sed -i'' "${num}s/\[ \]/[x]/" "$TODO_FILE" 2>/dev/null
+                _sed_inplace "${num}s/\[ \]/[x]/" "$TODO_FILE"
                 echo -e "  \033[38;5;46m✓\033[0m Marked #$num as done"
             fi
             ;;
         rm|remove)
             local num="${2:-1}"
             if [[ -f "$TODO_FILE" ]]; then
-                sed -i'' "${num}d" "$TODO_FILE" 2>/dev/null
+                _sed_inplace "${num}d" "$TODO_FILE"
                 echo -e "  \033[38;5;46m✓\033[0m Removed #$num"
             fi
             ;;
@@ -1416,7 +1441,7 @@ nyan() {
     while ((SECONDS < end)); do
         clear
         echo ""
-        echo -e "  \033[38;5;${colors[$((frame % ${#colors[@]}))]}m${frames[$((frame % 2))]}\033[0m"
+        echo -e "  \033[38;5;${colors[$((frame % ${#colors[@]} + 1))]}m${frames[$((frame % 2 + 1))]}\033[0m"
         echo ""
         echo -e "  \033[38;5;213m♪ Nyan nyan nyan~ ♪\033[0m"
         ((frame++))
@@ -1504,20 +1529,14 @@ shorten() {
     echo -e "  \033[38;5;51m🔗 Shortening URL...\033[0m"
     
     # Using is.gd free API
-    local short=$(curl -s "https://is.gd/create.php?format=simple&url=$url" 2>/dev/null)
+    local short=$(curl -s "https://is.gd/create.php?format=simple&url=$(_url_encode "$url")" 2>/dev/null)
     
     if [[ -n "$short" && "$short" != "Error"* ]]; then
         echo ""
         echo -e "  \033[38;5;46m✓ Short URL:\033[0m $short"
         
-        # Copy to clipboard if possible
-        if command -v pbcopy &>/dev/null; then
-            echo -n "$short" | pbcopy
-            echo -e "  \033[38;5;245m(Copied to clipboard)\033[0m"
-        elif command -v xclip &>/dev/null; then
-            echo -n "$short" | xclip -selection clipboard
-            echo -e "  \033[38;5;245m(Copied to clipboard)\033[0m"
-        fi
+        echo -n "$short" | _copy 2>/dev/null
+        echo -e "  \033[38;5;245m(Copied to clipboard)\033[0m"
     else
         echo -e "  \033[38;5;196m✗\033[0m Failed to shorten URL"
     fi
@@ -1667,26 +1686,6 @@ blackjack() {
         else
             _last_card=$(( (RANDOM + _card_counter * 7) % 13 + 1 ))
         fi
-    }
-    
-    # Get card display name
-    _card_name() {
-        case $1 in
-            1) echo "A" ;;
-            11) echo "J" ;;
-            12) echo "Q" ;;
-            13) echo "K" ;;
-            *) echo "$1" ;;
-        esac
-    }
-    
-    # Get card value
-    _card_val() {
-        case $1 in
-            1) echo 1 ;;
-            11|12|13) echo 10 ;;
-            *) echo "$1" ;;
-        esac
     }
     
     # Calculate hand total (inline, no subshell)
@@ -1950,8 +1949,8 @@ snake() {
     body_y=($head_y)
     
     tput civis
-    stty -echo 2>/dev/null
-    trap 'stty echo 2>/dev/null; tput cnorm; return' INT EXIT
+    stty -echo -icanon min 0 time 1 2>/dev/null
+    trap 'stty echo icanon 2>/dev/null; tput cnorm; return' INT EXIT
     
     clear
     
@@ -1987,7 +1986,8 @@ snake() {
         printf -- "-%.0s" $(seq 1 $width)
         echo "+"
         
-        read -t 0.12 -s -n 1 key 2>/dev/null || true
+        local key=""
+        read -t 0.12 -k 1 key 2>/dev/null || true
         case "$key" in
             w|W) [[ $dir != "down" ]] && dir="up" ;;
             s|S) [[ $dir != "up" ]] && dir="down" ;;
@@ -2021,7 +2021,7 @@ snake() {
         fi
     done
     
-    stty echo 2>/dev/null
+    stty echo icanon 2>/dev/null
     tput cnorm
     echo ""
     echo -e "  \033[38;5;196m💀 Game Over!\033[0m Final Score: $score"
