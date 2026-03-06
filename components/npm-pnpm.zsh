@@ -234,7 +234,8 @@ build() {
 }
 
 # Test runner with animation
-test() {
+# Named 'nt' (npm test) to avoid overriding the shell built-in 'test' command
+nt() {
     echo -e "\033[38;5;141m$NPM_TEST_ART\033[0m"
     
     # Detect package manager
@@ -247,6 +248,7 @@ test() {
     
     eval "$cmd"
 }
+alias ntest='nt'
 
 # Quick scripts
 alias nr='npm run'

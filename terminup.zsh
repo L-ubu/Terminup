@@ -80,7 +80,7 @@ _terminup_load_component() {
             _terminup_lazy_load "navigation" ll l lt fcd mkcd recent
             ;;
         npm)
-            _terminup_lazy_load "npm-pnpm" ni pi dev build test scripts add add-dev remove outdated
+            _terminup_lazy_load "npm-pnpm" ni pi dev build nt ntest scripts add add-dev remove outdated
             ;;
         ddev)
             _terminup_lazy_load "ddev" dni dpi ddev-dev ddev-build ddev-scripts dstart dstop drestart dssh dlogs dinfo dcomposer dartisan dmysql fddev dlist is_ddev_project ddev_status
@@ -362,7 +362,7 @@ _tup_npm() {
     echo -e "    \033[38;5;208mni\033[0m / \033[38;5;208mpi\033[0m     npm/pnpm install"
     echo -e "    \033[38;5;208mdev\033[0m          Start dev server"
     echo -e "    \033[38;5;208mbuild\033[0m        Production build"
-    echo -e "    \033[38;5;208mtest\033[0m         Run tests"
+    echo -e "    \033[38;5;208mnt\033[0m           Run tests (npm/pnpm/yarn)"
     echo -e "    \033[38;5;208mscripts\033[0m      List npm scripts"
     echo -e "    \033[38;5;208madd\033[0m/\033[38;5;208madd-dev\033[0m  Add dependency"
     echo -e "    \033[38;5;208mremove\033[0m       Remove dependency"
