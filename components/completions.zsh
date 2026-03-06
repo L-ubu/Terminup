@@ -46,7 +46,10 @@ zstyle ':completion:*:*:cd:*:directory-stack' menu yes select
 zstyle ':completion:*:-tilde-:*' group-order 'named-directories' 'path-directories' 'users' 'expand'
 
 # Git completion enhancements
-zstyle ':completion:*:*:git:*' script ~/.git-completion.bash 2>/dev/null
+# Only load git-completion.bash if it exists (avoids __git_aliased_command errors)
+if [[ -f ~/.git-completion.bash ]]; then
+    zstyle ':completion:*:*:git:*' script ~/.git-completion.bash
+fi
 zstyle ':completion:*:git-checkout:*' sort false
 zstyle ':completion:*:git:*' list-colors '=(#b) #([a-f0-9]#)*=0=38;5;208'
 
