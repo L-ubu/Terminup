@@ -65,14 +65,14 @@ Terminup transforms your terminal into a modern, animated development environmen
 ### Animated Git Commands
 
 ```
-   ╭─────────────────────────────────╮
-   │  PUSHING TO REMOTE              │
-   ╰─────────────────────────────────╯
+   +-----------------------------------+
+   |  PUSHING TO REMOTE                |
+   +-----------------------------------+
    
-      LOCAL          ════════▶         REMOTE
-     ┌─────┐                          ┌─────┐
-     │     │  ───── * ──────────────▶ │     │
-     └─────┘                          └─────┘
+      LOCAL          ========>         REMOTE
+     +-----+                          +-----+
+     |     |  ----- * -------------> |     |
+     +-----+                          +-----+
 ```
 
 Every git operation comes with visual feedback:
@@ -84,18 +84,18 @@ Every git operation comes with visual feedback:
 ### Screensavers & Lock Screen
 
 ```
-   ╭─────────────────────────────────╮
-   │  [~] SCREENSAVER COLLECTION     │
-   ╰─────────────────────────────────╯
+   +-----------------------------------+
+   |  [~] SCREENSAVER COLLECTION       |
+   +-----------------------------------+
    
-   • Digital Clock - Large ASCII time display
-   • Analog Clock - ASCII clock with multiple shapes
-   • Matrix Rain - Falling Japanese characters
-   • Pipes - Animated pipe maze
-   • Stars - Flying starfield effect
-   • Aquarium - Swimming fish animation
-   • Fire - Burning flames effect
-   • Lock Screen - Fullscreen with unlock sequence
+   - Digital Clock - Large ASCII time display
+   - Analog Clock - ASCII clock with multiple shapes
+   - Matrix Rain - Falling Japanese characters
+   - Pipes - Animated pipe maze
+   - Stars - Flying starfield effect
+   - Aquarium - Swimming fish animation
+   - Fire - Burning flames effect
+   - Lock Screen - Fullscreen with unlock sequence
 ```
 
 ### Cross-Platform Support
