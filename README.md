@@ -71,7 +71,7 @@ Terminup transforms your terminal into a modern, animated development environmen
    
       LOCAL          ════════▶         REMOTE
      ┌─────┐                          ┌─────┐
-     │     │  ───── ✨ ─────────────▶ │     │
+     │     │  ───── * ──────────────▶ │     │
      └─────┘                          └─────┘
 ```
 
@@ -85,7 +85,7 @@ Every git operation comes with visual feedback:
 
 ```
    ╭─────────────────────────────────╮
-   │  🖥️ SCREENSAVER COLLECTION       │
+   │  [~] SCREENSAVER COLLECTION     │
    ╰─────────────────────────────────╯
    
    • Digital Clock - Large ASCII time display
